@@ -1,0 +1,14 @@
+# Cache e arquivos temporários
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.log
+*.tmp
+.vscode/settings.json
+.env.local
+build/
+dist/
+node_modules
+.env
