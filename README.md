@@ -219,7 +219,7 @@ python -m uvicorn src.api_new:app --reload --host 0.0.0.0 --port 8001
 
 ### 💬 Onde pedir ajuda:
 
-- **GitHub Issues**: [Clique aqui para reportar problemas](https://github.com/Bappoz/Web-Scraper-UniSER/issues)
+- **GitHub Issues**: [Clique aqui para reportar problemas](https://github.com/Bappoz/researchs-web-scrapper-for-UniSER/issues)
 - **Email**: [Contato com o desenvolvedor]
 
 ### 🔧 Comandos úteis:
