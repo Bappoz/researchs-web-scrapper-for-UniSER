@@ -5,7 +5,7 @@
 
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8003";
+const API_BASE_URL = "http://localhost:8000";
 
 // Configuração do axios
 const api = axios.create({
@@ -172,6 +172,8 @@ export const academicService = {
   ): Promise<SearchResponse> {
     // Extrair o query do profileUrl (nome do autor)
     let query = "Autor";
+    let detectedPlatform = platform;
+
     if (profileUrl.includes("leonardo")) {
       query = "Leonardo";
     } else if (profileUrl.includes("orcid.org")) {
@@ -180,12 +182,21 @@ export const academicService = {
       if (idMatch) {
         query = `ORCID-${idMatch[1].split("-")[3]}`;
       }
+      detectedPlatform = "orcid";
+    } else if (profileUrl.includes("lattes.cnpq.br")) {
+      // Para Lattes, extrair o ID e usar como query
+      const lattesIdMatch = profileUrl.match(/\/(\d{16})$/);
+      if (lattesIdMatch) {
+        query = `LATTES-${lattesIdMatch[1]}`;
+      }
+      detectedPlatform = "lattes";
     }
 
     const data: any = {
       query: query,
       export_excel: exportExcel,
-      platforms: platform || "orcid",
+      platforms: detectedPlatform || "orcid",
+      profile_url: profileUrl, // Enviar a URL original também
     };
 
     console.log("🔍 Enviando POST para /search/author/profile:", data);

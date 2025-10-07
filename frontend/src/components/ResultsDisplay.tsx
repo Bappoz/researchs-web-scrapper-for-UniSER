@@ -91,12 +91,24 @@ interface ResultsByPlatform {
   };
 }
 
+interface ResearcherInfo {
+  name: string;
+  institution?: string;
+  research_areas?: string[];
+  h_index?: string | number;
+  total_citations?: string | number;
+  orcid_id?: string;
+  last_update?: string;
+  affiliation?: string;
+}
+
 interface ResultsDisplayProps {
   results: {
     results_by_platform?: ResultsByPlatform;
     publications?: Publication[];
     profiles?: Profile[];
     data?: any;
+    researcher_info?: ResearcherInfo;
     total_results?: number;
     search_type?: string;
     query?: string;
@@ -501,6 +513,150 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Perfil do Pesquisador */}
+      {results.researcher_info && (
+        <div className='bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 p-6'>
+          <div className='flex items-start space-x-6'>
+            {/* Avatar/Ícone */}
+            <div className='flex-shrink-0'>
+              <div
+                className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white ${
+                  results.platform === "scholar"
+                    ? "bg-blue-500"
+                    : results.platform === "lattes"
+                    ? "bg-green-500"
+                    : results.platform === "orcid"
+                    ? "bg-purple-500"
+                    : "bg-gray-500"
+                }`}
+              >
+                {results.platform === "scholar"
+                  ? "🎓"
+                  : results.platform === "lattes"
+                  ? "🇧🇷"
+                  : results.platform === "orcid"
+                  ? "🌐"
+                  : "👤"}
+              </div>
+            </div>
+
+            {/* Informações do Perfil */}
+            <div className='flex-1 min-w-0'>
+              <div className='flex items-start justify-between'>
+                <div className='flex-1'>
+                  <h3 className='text-xl font-bold text-gray-900 mb-2 flex items-center gap-2'>
+                    <User className='h-5 w-5 text-gray-600' />
+                    {results.researcher_info.name}
+                  </h3>
+
+                  {/* Instituição */}
+                  {(results.researcher_info.institution ||
+                    results.researcher_info.affiliation) && (
+                    <div className='flex items-center gap-2 mb-2 text-gray-700'>
+                      <Building className='h-4 w-4 text-gray-500' />
+                      <span className='text-sm font-medium'>
+                        {results.researcher_info.institution ||
+                          results.researcher_info.affiliation}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Áreas de Pesquisa */}
+                  {results.researcher_info.research_areas &&
+                    results.researcher_info.research_areas.length > 0 && (
+                      <div className='flex items-start gap-2 mb-3'>
+                        <Book className='h-4 w-4 text-gray-500 mt-0.5' />
+                        <div className='flex flex-wrap gap-1'>
+                          {results.researcher_info.research_areas
+                            .slice(0, 3)
+                            .map((area, index) => (
+                              <span
+                                key={index}
+                                className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium'
+                              >
+                                {area}
+                              </span>
+                            ))}
+                          {results.researcher_info.research_areas.length >
+                            3 && (
+                            <span className='text-gray-500 text-xs'>
+                              +
+                              {results.researcher_info.research_areas.length -
+                                3}{" "}
+                              mais
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                </div>
+
+                {/* Métricas */}
+                <div className='flex gap-4 ml-4'>
+                  {results.researcher_info.h_index && (
+                    <div className='text-center bg-white rounded-lg p-3 shadow-sm border border-gray-200'>
+                      <div className='text-lg font-bold text-blue-600'>
+                        {results.researcher_info.h_index}
+                      </div>
+                      <div className='text-xs text-gray-600 font-medium'>
+                        Índice H
+                      </div>
+                    </div>
+                  )}
+
+                  {results.researcher_info.total_citations && (
+                    <div className='text-center bg-white rounded-lg p-3 shadow-sm border border-gray-200'>
+                      <div className='text-lg font-bold text-green-600'>
+                        {typeof results.researcher_info.total_citations ===
+                        "number"
+                          ? results.researcher_info.total_citations.toLocaleString()
+                          : results.researcher_info.total_citations}
+                      </div>
+                      <div className='text-xs text-gray-600 font-medium'>
+                        Citações
+                      </div>
+                    </div>
+                  )}
+
+                  {results.total_results && (
+                    <div className='text-center bg-white rounded-lg p-3 shadow-sm border border-gray-200'>
+                      <div className='text-lg font-bold text-purple-600'>
+                        {results.total_results}
+                      </div>
+                      <div className='text-xs text-gray-600 font-medium'>
+                        Publicações
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* IDs/Links */}
+              <div className='flex gap-4 mt-3 text-sm'>
+                {results.researcher_info.orcid_id && (
+                  <a
+                    href={`https://orcid.org/${results.researcher_info.orcid_id}`}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='flex items-center gap-1 text-purple-600 hover:text-purple-800 transition-colors'
+                  >
+                    <ExternalLink className='h-3 w-3' />
+                    ORCID: {results.researcher_info.orcid_id}
+                  </a>
+                )}
+
+                {results.researcher_info.last_update && (
+                  <div className='flex items-center gap-1 text-gray-500'>
+                    <Calendar className='h-3 w-3' />
+                    Atualizado: {results.researcher_info.last_update}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs de Plataformas MELHORADAS */}
       {(scholarCount > 0 || lattesCount > 0 || orcidCount > 0) && (
