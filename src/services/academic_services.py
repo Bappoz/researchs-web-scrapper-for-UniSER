@@ -20,6 +20,7 @@ from ..models.academic_models import (
     PlatformType, LattesSearchType, ORCIDSearchType,
     AcademicSummary
 )
+from ..utils.academic_metrics import calculate_academic_metrics
 
 # Carregar variáveis de ambiente
 env_path = os.path.join(os.path.dirname(__file__), 'scraper', '.env')
@@ -792,6 +793,17 @@ class ORCIDService:
             
             print(f"✅ ORCID DEBUG - Perfil processado: {display_name} ({len(employments)} empregos, {len(works)} trabalhos)")
             
+            # Calcular métricas acadêmicas
+            works_for_metrics = []
+            for work in works:
+                works_for_metrics.append({
+                    "cited_by": work.cited_by or 0,
+                    "title": work.title,
+                    "publication_date": work.publication_date
+                })
+            
+            metrics = calculate_academic_metrics(works_for_metrics)
+            
             profile = ORCIDProfile(
                 orcid_id=orcid_id,
                 given_names=given_names or "",
@@ -804,6 +816,9 @@ class ORCIDService:
                 employments=employments,
                 educations=educations,
                 works=works,
+                total_works=len(works),
+                h_index=metrics.get("h_index", 0),
+                total_citations=metrics.get("total_citations", 0),
                 last_modified_date=datetime.now()
             )
             
@@ -839,6 +854,9 @@ class ORCIDService:
             employments=[],
             educations=[],
             works=[],
+            total_works=0,
+            h_index=0,
+            total_citations=0,
             last_modified_date=datetime.now()
         )
         if emails_data.get('email'):

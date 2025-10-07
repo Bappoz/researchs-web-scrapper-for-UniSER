@@ -53,6 +53,8 @@ interface Profile {
   lattes_url?: string;
   publications?: Publication[];
   total_publications?: number;
+  h_index?: number;
+  total_citations?: number;
   last_update?: string;
   given_names?: string;
   family_name?: string;
@@ -120,6 +122,11 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   console.log(
     "🔍 ResultsDisplay - results_by_platform:",
     results?.results_by_platform
+  );
+  console.log("🔍 ResultsDisplay - results.data:", results?.data);
+  console.log(
+    "🔍 ResultsDisplay - results.publications:",
+    results?.publications
   );
 
   if (isLoading) {
@@ -226,12 +233,18 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
   // Resultados diretos
   if (results.publications) {
+    console.log(
+      "🔍 Encontradas publicações diretas:",
+      results.publications.length
+    );
     allItems.push(
       ...results.publications.map((p) => ({
         ...p,
         platform: results.platform || "scholar",
       }))
     );
+  } else {
+    console.log("🔍 Nenhuma publicação direta encontrada");
   }
 
   if (results.profiles) {
@@ -254,12 +267,18 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   }
 
   if (results.data?.publications) {
+    console.log(
+      "🔍 Encontradas publicações em results.data:",
+      results.data.publications.length
+    );
     allItems.push(
       ...results.data.publications.map((p: Publication) => ({
         ...p,
         platform: results.platform || "scholar",
       }))
     );
+  } else {
+    console.log("🔍 Nenhuma publicação encontrada em results.data");
   }
 
   // Resultados por plataforma (COMPREHENSIVE SEARCH)
@@ -402,7 +421,9 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
   // Função para determinar se é publicação ou perfil
   const isPublication = (item: Publication | Profile): item is Publication => {
-    return "title" in item && !("lattes_id" in item || "orcid_id" in item);
+    // Se tem title E não tem name, é publicação
+    // Se tem title E authors, é publicação (mesmo que tenha orcid_id)
+    return "title" in item && (!("name" in item) || "authors" in item);
   };
 
   const isProfile = (item: Publication | Profile): item is Profile => {
@@ -574,6 +595,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
               const isExpanded = expandedCards.has(itemId);
               const link = getItemLink(item);
 
+              // DEBUG: verificar item individual
+              console.log(`🎯 Item ${index}:`, item);
+              console.log(`🎯 isPublication(item): ${isPublication(item)}`);
+              console.log(`🎯 title: "${(item as any).title}"`);
+              console.log(`🎯 authors: "${(item as any).authors}"`);
+
               return (
                 <div
                   key={itemId}
@@ -663,6 +690,19 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                                 </span>
                               </div>
                             )}
+                            {item.h_index !== undefined && item.h_index > 0 && (
+                              <div className='flex items-center gap-1'>
+                                <Award className='h-4 w-4' />
+                                <span>Índice H: {item.h_index}</span>
+                              </div>
+                            )}
+                            {item.total_citations !== undefined &&
+                              item.total_citations > 0 && (
+                                <div className='flex items-center gap-1'>
+                                  <Trophy className='h-4 w-4' />
+                                  <span>{item.total_citations} citações</span>
+                                </div>
+                              )}
                             {item.research_areas &&
                               item.research_areas.length > 0 && (
                                 <div className='flex items-center gap-1'>
@@ -777,6 +817,44 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                             </div>
                           ) : (
                             <div className='space-y-3 text-sm'>
+                              {/* Métricas Acadêmicas */}
+                              {(item.h_index !== undefined ||
+                                item.total_citations !== undefined) && (
+                                <div>
+                                  <span className='font-medium text-gray-700'>
+                                    Métricas Acadêmicas:
+                                  </span>
+                                  <div className='mt-2 grid grid-cols-2 gap-4'>
+                                    {item.h_index !== undefined && (
+                                      <div className='flex items-center gap-2 p-2 bg-blue-50 rounded-lg'>
+                                        <Award className='h-5 w-5 text-blue-600' />
+                                        <div>
+                                          <div className='font-semibold text-blue-800'>
+                                            {item.h_index}
+                                          </div>
+                                          <div className='text-xs text-blue-600'>
+                                            Índice H
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {item.total_citations !== undefined && (
+                                      <div className='flex items-center gap-2 p-2 bg-green-50 rounded-lg'>
+                                        <Trophy className='h-5 w-5 text-green-600' />
+                                        <div>
+                                          <div className='font-semibold text-green-800'>
+                                            {item.total_citations}
+                                          </div>
+                                          <div className='text-xs text-green-600'>
+                                            Citações
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
                               {item.biography && (
                                 <div>
                                   <span className='font-medium text-gray-700'>

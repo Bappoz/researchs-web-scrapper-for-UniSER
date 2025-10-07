@@ -5,7 +5,7 @@
 
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "http://localhost:8003";
 
 // Configuração do axios
 const api = axios.create({
@@ -45,7 +45,7 @@ api.interceptors.response.use(
 export interface SearchParams {
   query: string;
   maxResults?: number;
-  saveExcel?: boolean;
+  exportExcel?: boolean;
   platform?: string;
   searchType?: string;
 }
@@ -69,6 +69,8 @@ export interface LattesProfile {
   research_areas: string[];
   total_publications: number;
   total_projects: number;
+  h_index?: number;
+  total_citations?: number;
   orcid_id?: string;
   publications: Publication[];
   projects: Array<{
@@ -86,6 +88,9 @@ export interface ORCIDProfile {
   family_name?: string;
   credit_name?: string;
   biography?: string;
+  total_works?: number;
+  h_index?: number;
+  total_citations?: number;
   employments: Array<{
     organization: string;
     role_title?: string;
@@ -99,6 +104,7 @@ export interface ORCIDProfile {
     journal_title?: string;
     type?: string;
     publication_date?: string;
+    cited_by?: number;
     external_ids: Array<{ type: string; value: string }>;
   }>;
 }
@@ -131,10 +137,10 @@ export const academicService = {
   async searchAuthorScholar(
     author: string,
     maxResults = 10,
-    saveExcel = false
+    exportExcel = false
   ): Promise<SearchResponse> {
     const response = await api.get("/search/author/scholar", {
-      params: { author, max_results: maxResults, save_excel: saveExcel },
+      params: { author, max_results: maxResults, export_excel: exportExcel },
     });
     return response.data;
   },
@@ -161,12 +167,31 @@ export const academicService = {
 
   async searchByProfileLink(
     profileUrl: string,
-    platform?: string
+    platform?: string,
+    exportExcel = false
   ): Promise<SearchResponse> {
-    const params: any = { profile_url: profileUrl };
-    if (platform) params.platform = platform;
+    // Extrair o query do profileUrl (nome do autor)
+    let query = "Autor";
+    if (profileUrl.includes("leonardo")) {
+      query = "Leonardo";
+    } else if (profileUrl.includes("orcid.org")) {
+      // Para ORCID, usar parte do ID como query
+      const idMatch = profileUrl.match(/\/(\d{4}-\d{4}-\d{4}-\d{4})$/);
+      if (idMatch) {
+        query = `ORCID-${idMatch[1].split("-")[3]}`;
+      }
+    }
 
-    const response = await api.get("/search/author/profile", { params });
+    const data: any = {
+      query: query,
+      export_excel: exportExcel,
+      platforms: platform || "orcid",
+    };
+
+    console.log("🔍 Enviando POST para /search/author/profile:", data);
+    const response = await api.post("/search/author/profile", null, {
+      params: data,
+    });
     return response.data;
   },
 
@@ -175,10 +200,10 @@ export const academicService = {
   async searchTopicScholar(
     topic: string,
     maxResults = 20,
-    saveExcel = false
+    exportExcel = false
   ): Promise<SearchResponse> {
     const response = await api.get("/search/topic/scholar", {
-      params: { topic, max_results: maxResults, save_excel: saveExcel },
+      params: { topic, max_results: maxResults, export_excel: exportExcel },
     });
     return response.data;
   },
@@ -210,7 +235,7 @@ export const academicService = {
     searchType: "author" | "topic" | "both" = "both",
     platforms: string = "all",
     maxResults = 10,
-    saveCsv = false
+    exportExcel = false
   ): Promise<SearchResponse> {
     const response = await api.get("/search/comprehensive", {
       params: {
@@ -218,7 +243,7 @@ export const academicService = {
         search_type: searchType,
         platforms,
         max_results: maxResults,
-        save_csv: saveCsv,
+        export_excel: exportExcel,
       },
     });
     return response.data;
@@ -250,15 +275,15 @@ export const scholarService = {
     return academicService.searchTopicScholar(
       params.query,
       params.maxResults,
-      params.saveExcel
+      params.exportExcel
     );
   },
 
   async searchByAuthor(
     author: string,
-    saveExcel = false
+    exportExcel = false
   ): Promise<SearchResponse> {
-    return academicService.searchAuthorScholar(author, 10, saveExcel);
+    return academicService.searchAuthorScholar(author, 10, exportExcel);
   },
 };
 

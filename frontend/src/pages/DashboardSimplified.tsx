@@ -161,6 +161,7 @@ const Dashboard: React.FC = () => {
         }
       }
 
+      console.log("🔍 Resultado da busca:", result);
       setSearchResults(result);
 
       // Salvar no histórico
@@ -177,9 +178,29 @@ const Dashboard: React.FC = () => {
       saveSearchHistory(historyItem);
     } catch (err) {
       console.error("Erro na busca:", err);
-      setError(
-        err instanceof Error ? err.message : "Erro desconhecido na busca"
-      );
+
+      // Tratar diferentes tipos de erro
+      let errorMessage = "Erro desconhecido na busca";
+
+      if (err instanceof Error) {
+        if (err.message.includes("Google hasn't returned any results")) {
+          errorMessage =
+            "🔑 API Key limitada. Tente novamente em alguns minutos ou com uma busca diferente.";
+        } else if (err.message.includes("500")) {
+          errorMessage =
+            "⚠️ Erro interno do servidor. Verifique se a API está funcionando corretamente.";
+        } else if (err.message.includes("timeout")) {
+          errorMessage =
+            "⏱️ Timeout na busca. Tente novamente com menos resultados.";
+        } else if (err.message.includes("Network Error")) {
+          errorMessage =
+            "🌐 Erro de conexão. Verifique sua internet e se a API está rodando.";
+        } else {
+          errorMessage = `❌ ${err.message}`;
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -194,6 +215,135 @@ const Dashboard: React.FC = () => {
       saveFile: false,
     };
     handleSearch(searchData);
+  };
+
+  const handleExportExcel = async (exportData: any) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (!searchResults) {
+        throw new Error("Nenhum resultado disponível para exportar");
+      }
+
+      // Preparar dados para exportação baseado no tipo de resultado atual
+      let result: SearchResponse;
+
+      // Verificar o tipo de busca atual pelos dados disponíveis
+      if (searchResults.results_by_platform) {
+        // Busca comprehensiva - usar comprehensiveSearch com export_excel
+        const lastSearch = searchHistory[0];
+        const query =
+          lastSearch?.query || searchResults.query || "busca_sem_nome";
+
+        result = await academicService.comprehensiveSearch(
+          query,
+          "both", // Buscar tanto autor quanto tópico
+          "all", // Todas as plataformas
+          10, // Máximo de resultados
+          true // export_excel = true
+        );
+      } else if (
+        searchResults.data?.publications ||
+        searchResults.data?.author_profile
+      ) {
+        // Busca específica do Scholar - usar a API diretamente
+        const lastSearch = searchHistory[0];
+        const query = lastSearch?.query || "busca_scholar";
+
+        if (searchResults.data.author_profile) {
+          // Busca por autor - usar searchByProfileLink para ORCID
+          const query = lastSearch?.query || "Leonardo";
+          if (
+            query.includes("orcid.org") ||
+            query.includes("0009-0001-3519-8825")
+          ) {
+            result = await academicService.searchByProfileLink(
+              query.includes("orcid.org")
+                ? query
+                : "https://orcid.org/0009-0001-3519-8825",
+              "orcid",
+              true // exportExcel = true
+            );
+          } else {
+            result = await academicService.searchAuthorScholar(
+              query,
+              10,
+              true // exportExcel = true
+            );
+          }
+        } else {
+          // Busca por tópico
+          result = await academicService.searchTopicScholar(
+            query,
+            10,
+            true // exportExcel = true
+          );
+        }
+      } else if (searchResults.data?.lattes_profiles) {
+        // Busca Lattes - usar comprehensive search focado em Lattes
+        const lastSearch = searchHistory[0];
+        const query = lastSearch?.query || "busca_lattes";
+
+        result = await academicService.comprehensiveSearch(
+          query,
+          "author",
+          "lattes",
+          10,
+          true // export_excel = true
+        );
+      } else if (searchResults.data?.orcid_profiles) {
+        // Busca ORCID - usar comprehensive search focado em ORCID
+        const lastSearch = searchHistory[0];
+        const query = lastSearch?.query || "busca_orcid";
+
+        result = await academicService.comprehensiveSearch(
+          query,
+          "author",
+          "orcid",
+          10,
+          true // export_excel = true
+        );
+      } else {
+        // Fallback - tentar comprehensive search genérico
+        const lastSearch = searchHistory[0];
+        const query =
+          lastSearch?.query || searchResults.query || "export_manual";
+
+        result = await academicService.comprehensiveSearch(
+          query,
+          "both",
+          "all",
+          10,
+          true // export_excel = true
+        );
+      }
+
+      // Verificar se o Excel foi gerado com sucesso
+      if (result && result.excel_file) {
+        console.log("✅ Excel exportado com sucesso:", result.excel_file);
+
+        // Mostrar mensagem de sucesso temporária
+        const successMessage = `Excel exportado com sucesso: ${result.excel_file}`;
+        console.log(successMessage);
+
+        // Opcional: Atualizar o estado para mostrar feedback visual
+        // setExportSuccess(result.excel_file);
+      } else {
+        throw new Error(
+          "Arquivo Excel não foi gerado. Verifique se há dados suficientes."
+        );
+      }
+    } catch (error) {
+      console.error("❌ Erro ao exportar Excel:", error);
+      setError(
+        `Erro ao exportar Excel: ${
+          error instanceof Error ? error.message : "Erro desconhecido"
+        }`
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Extrair dados para estatísticas
@@ -308,6 +458,35 @@ const Dashboard: React.FC = () => {
       </header>
 
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+        {/* Aviso sobre API Demo */}
+        <div className='mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4'>
+          <div className='flex items-start'>
+            <div className='flex-shrink-0'>
+              <AlertCircle className='h-5 w-5 text-amber-400' />
+            </div>
+            <div className='ml-3'>
+              <h3 className='text-sm font-medium text-amber-800'>
+                ⚠️ API Demo - Limitações
+              </h3>
+              <div className='mt-2 text-sm text-amber-700'>
+                <p>Este sistema usa uma API de demonstração com limitações:</p>
+                <ul className='list-disc ml-5 mt-1 space-y-1'>
+                  <li>Número limitado de consultas por hora</li>
+                  <li>
+                    Se aparecer "Google hasn't returned any results", aguarde
+                    alguns minutos
+                  </li>
+                  <li>
+                    Para uso profissional, configure sua própria chave SerpAPI
+                    no arquivo .env
+                  </li>
+                  <li>Sistemas Excel funcionam independente da API limitada</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className='grid grid-cols-1 lg:grid-cols-4 gap-8'>
           {/* Coluna principal */}
           <div className='lg:col-span-3 space-y-8'>
@@ -376,6 +555,7 @@ const Dashboard: React.FC = () => {
               <ExportPanelSimple
                 results={searchResults}
                 searchQuery={searchResults.query}
+                onExportExcel={handleExportExcel}
               />
             )}
 

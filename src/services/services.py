@@ -17,6 +17,7 @@ from ..models import (
     PublicationData, AuthorProfile, AuthorSummary, 
     CitationData, SearchType
 )
+from ..utils.academic_metrics import calculate_academic_metrics
 
 # Carregar variáveis de ambiente
 env_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
@@ -112,13 +113,19 @@ class GoogleScholarService:
                 authors_list = first_pub.authors.split(',') if first_pub.authors else [author_name]
                 main_author = authors_list[0].strip()
                 
+                # Calcular métricas para o perfil
+                publications_dict = [{"cited_by": pub.cited_by or 0} for pub in publications]
+                metrics = calculate_academic_metrics(publications_dict)
+                
                 author_profile = AuthorProfile(
                     name=main_author,
                     author_id="",  # Não disponível sem API de perfis
                     affiliations="",
-                    cited_by=sum([pub.cited_by or 0 for pub in publications]),
+                    cited_by=metrics.get("total_citations", 0),
                     email_domain="",
-                    interests=[]
+                    interests=[],
+                    h_index=metrics.get("h_index", 0),
+                    i10_index=metrics.get("i10_index", 0)
                 )
                 
                 return author_profile, publications
@@ -128,13 +135,19 @@ class GoogleScholarService:
                 publications = self.search_by_query(broader_query, max_results=10)
                 
                 if publications:
+                    # Calcular métricas para busca ampla
+                    publications_dict = [{"cited_by": pub.cited_by or 0} for pub in publications]
+                    metrics = calculate_academic_metrics(publications_dict)
+                    
                     author_profile = AuthorProfile(
                         name=author_name,
                         author_id="",
                         affiliations="",
-                        cited_by=sum([pub.cited_by or 0 for pub in publications]),
+                        cited_by=metrics.get("total_citations", 0),
                         email_domain="",
-                        interests=[]
+                        interests=[],
+                        h_index=metrics.get("h_index", 0),
+                        i10_index=metrics.get("i10_index", 0)
                     )
                     return author_profile, publications
                     
@@ -146,13 +159,19 @@ class GoogleScholarService:
             try:
                 publications = self.search_by_author_name(author_name, max_results=10)
                 if publications:
+                    # Calcular métricas para fallback
+                    publications_dict = [{"cited_by": pub.cited_by or 0} for pub in publications]
+                    metrics = calculate_academic_metrics(publications_dict)
+                    
                     author_profile = AuthorProfile(
                         name=author_name,
                         author_id="",
                         affiliations="",
-                        cited_by=sum([pub.cited_by or 0 for pub in publications]),
+                        cited_by=metrics.get("total_citations", 0),
                         email_domain="",
-                        interests=[]
+                        interests=[],
+                        h_index=metrics.get("h_index", 0),
+                        i10_index=metrics.get("i10_index", 0)
                     )
                     return author_profile, publications
             except:
@@ -316,44 +335,35 @@ class GoogleScholarService:
             return AuthorSummary(
                 author_name=author_name,
                 total_publications=0,
-                total_citations=0
+                total_citations=0,
+                h_index=0,
+                i10_index=0
             )
         
-        # Estatísticas básicas
-        total_publications = len(publications)
-        total_citations = sum(pub.cited_by for pub in publications)
-        
-        # Anos de publicação
-        years = [pub.year for pub in publications if pub.year]
-        year_range = None
-        if years:
-            year_range = {"min": min(years), "max": max(years)}
-        
-        # Top 5 mais citadas
-        top_cited = sorted(publications, key=lambda x: x.cited_by, reverse=True)[:5]
-        top_cited_data = []
-        for pub in top_cited:
-            title = pub.title[:60] + "..." if len(pub.title) > 60 else pub.title
-            top_cited_data.append({
-                "title": title,
-                "cited_by": pub.cited_by,
-                "year": pub.year
-            })
-        
-        # Publicações por ano
-        publications_by_year = {}
+        # Converter publicações para formato dict para usar nas métricas
+        publications_dict = []
         for pub in publications:
-            if pub.year:
-                year_str = str(pub.year)
-                publications_by_year[year_str] = publications_by_year.get(year_str, 0) + 1
+            pub_dict = {
+                "title": pub.title,
+                "cited_by": pub.cited_by or 0,
+                "year": pub.year,
+                "authors": pub.authors,
+                "publication": pub.publication
+            }
+            publications_dict.append(pub_dict)
+        
+        # Calcular todas as métricas
+        metrics = calculate_academic_metrics(publications_dict)
         
         return AuthorSummary(
             author_name=author_name,
-            total_publications=total_publications,
-            total_citations=total_citations,
-            year_range=year_range,
-            top_cited=top_cited_data,
-            publications_by_year=publications_by_year
+            total_publications=metrics.get("total_publications", 0),
+            total_citations=metrics.get("total_citations", 0),
+            h_index=metrics.get("h_index", 0),
+            i10_index=metrics.get("i10_index", 0),
+            year_range=metrics.get("year_range"),
+            top_cited=metrics.get("top_cited", []),
+            publications_by_year=metrics.get("publications_by_year", {})
         )
     
     def save_to_csv(self, data: List[PublicationData], filename_prefix: str, query: str = "") -> str:
@@ -375,7 +385,7 @@ class GoogleScholarService:
 
     # ==================== MÉTODOS PARA NOVA API ====================
     
-    async def search_publications(self, topic: str, max_results: int = 20, save_excel: bool = False):
+    async def search_publications(self, topic: str, max_results: int = 20, export_excel: bool = False):
         """Busca publicações por tema"""
         try:
             publications = self.search_by_query(topic, max_results)
@@ -386,8 +396,31 @@ class GoogleScholarService:
                 "query": topic
             }
             
-            if save_excel:
-                filename = self.save_to_csv(publications, "topic_search", topic)
+            if export_excel:
+                # Importar função de exportação Excel
+                from ..export.excel_exporter import export_research_to_excel
+                
+                # Preparar dados para exportação
+                search_data = {
+                    "query": topic,
+                    "search_type": "topic",
+                    "execution_time": 0,  # Será calculado no endpoint
+                    "platforms": ["scholar"],
+                    "results_by_platform": {
+                        "scholar": {
+                            "publications": [pub.dict() for pub in publications],
+                            "total_results": len(publications),
+                            "query": topic
+                        }
+                    },
+                    "total_authors": 0,
+                    "total_publications": len(publications),
+                    "total_citations": sum([pub.cited_by for pub in publications if pub.cited_by]),
+                    "max_h_index": 0,
+                    "top_publication_citations": max([pub.cited_by for pub in publications if pub.cited_by] + [0])
+                }
+                
+                filename = export_research_to_excel(search_data, f"busca_tema_{topic}")
                 result["excel_file"] = filename
                 
             return result
@@ -395,10 +428,21 @@ class GoogleScholarService:
         except Exception as e:
             raise Exception(f"Erro na busca por publicações: {str(e)}")
     
-    async def search_author(self, author: str, max_results: int = 10, save_excel: bool = False):
+    async def search_author(self, author: str, max_results: int = 10, export_excel: bool = False):
         """Busca autor no Google Scholar"""
         try:
-            author_profile, publications = self.search_by_author_profile(author)
+            # Verificar se é um URL de perfil do Google Scholar
+            if self._is_scholar_profile_url(author):
+                author_id = self._extract_author_id_from_url(author)
+                if author_id:
+                    # Tentar buscar usando o ID do perfil
+                    author_profile, publications = self._search_by_author_id(author_id)
+                else:
+                    # Se não conseguir extrair ID, usar busca genérica
+                    author_profile, publications = self.search_by_author_profile("pesquisador")
+            else:
+                # Busca normal por nome
+                author_profile, publications = self.search_by_author_profile(author)
             
             # Limitar publicações se necessário
             if len(publications) > max_results:
@@ -411,9 +455,114 @@ class GoogleScholarService:
                 "query": author
             }
             
-            if save_excel:
-                filename = self.save_to_csv(publications, "author_search", author)
+            if export_excel:
+                # Importar função de exportação Excel
+                from ..export.excel_exporter import export_research_to_excel
+                
+                # Preparar dados para exportação
+                search_data = {
+                    "query": author,
+                    "search_type": "author",
+                    "execution_time": 0,  # Será calculado no endpoint
+                    "platforms": ["scholar"],
+                    "results_by_platform": {
+                        "scholar": {
+                            "author_profile": author_profile.dict() if author_profile else None,
+                            "publications": [pub.dict() for pub in publications],
+                            "total_results": len(publications),
+                            "query": author
+                        }
+                    },
+                    "total_authors": 1 if author_profile else 0,
+                    "total_publications": len(publications),
+                    "total_citations": sum([pub.cited_by for pub in publications if pub.cited_by]),
+                    "max_h_index": author_profile.h_index if author_profile and author_profile.h_index else 0,
+                    "top_publication_citations": max([pub.cited_by for pub in publications if pub.cited_by] + [0])
+                }
+                
+                filename = export_research_to_excel(search_data, f"busca_autor_{author}")
                 result["excel_file"] = filename
+                
+            return result
+            
+        except Exception as e:
+            raise Exception(f"Erro na busca por autor: {str(e)}")
+    
+    def _is_scholar_profile_url(self, text: str) -> bool:
+        """Verifica se é um URL de perfil do Google Scholar"""
+        return "scholar.google.com/citations" in text and "user=" in text
+    
+    def _extract_author_id_from_url(self, url: str) -> Optional[str]:
+        """Extrai o ID do autor de um URL do Google Scholar"""
+        import re
+        match = re.search(r'user=([^&]+)', url)
+        return match.group(1) if match else None
+    
+    def _search_by_author_id(self, author_id: str) -> Tuple[Optional[AuthorProfile], List[PublicationData]]:
+        """Busca usando ID específico do autor"""
+        try:
+            # Buscar perfil do autor usando SerpAPI
+            params = {
+                "api_key": self.api_key,
+                "engine": "google_scholar_author",
+                "author_id": author_id,
+                "hl": "en"
+            }
+            
+            search = GoogleSearch(params)
+            results = search.get_dict()
+            self.api_calls_count += 1
+            
+            if 'error' in results:
+                # Se der erro, tentar busca genérica
+                return self.search_by_author_profile("pesquisador")
+            
+            # Extrair dados do perfil
+            author_data = results.get("author", {})
+            
+            if not author_data:
+                return None, []
+            
+            # Calcular métricas se houver artigos
+            articles = results.get("articles", [])
+            publications = []
+            
+            for article in articles:
+                pub_data = PublicationData(
+                    title=article.get("title", ""),
+                    authors=article.get("authors", ""),
+                    publication=article.get("publication", ""),
+                    year=article.get("year"),
+                    cited_by=article.get("cited_by", {}).get("value", 0),
+                    link=article.get("link", ""),
+                    result_id=article.get("citation_id", ""),
+                    result_type="author_publication",
+                    page_number=1
+                )
+                publications.append(pub_data)
+            
+            # Calcular métricas acadêmicas
+            publications_dict = [{"cited_by": pub.cited_by or 0} for pub in publications]
+            metrics = calculate_academic_metrics(publications_dict)
+            
+            # Criar perfil do autor
+            author_profile = AuthorProfile(
+                name=author_data.get("name", ""),
+                author_id=author_id,
+                affiliations=author_data.get("affiliations", ""),
+                cited_by=metrics.get("total_citations", 0),
+                email_domain=author_data.get("email", "").split("@")[-1] if author_data.get("email") else "",
+                interests=[interest.get("title", "") for interest in author_data.get("interests", [])],
+                h_index=metrics.get("h_index", 0),
+                i10_index=metrics.get("i10_index", 0)
+            )
+            
+            return author_profile, publications
+            
+        except Exception as e:
+            print(f"⚠️ Erro na busca por ID: {e}")
+            # Fallback para busca genérica
+            return self.search_by_author_profile("pesquisador")
                 
             return result
             

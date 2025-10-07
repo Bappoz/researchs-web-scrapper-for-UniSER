@@ -48,6 +48,7 @@ class LattesPublication(BaseModel):
     volume: Optional[str] = Field(None, description="Volume")
     pages: Optional[str] = Field(None, description="Páginas")
     doi: Optional[str] = Field(None, description="DOI")
+    cited_by: int = Field(default=0, description="Número de citações")
     issn: Optional[str] = Field(None, description="ISSN")
     publication_type: str = Field(default="article", description="Tipo de publicação")
 
@@ -84,6 +85,8 @@ class LattesProfile(BaseModel):
     # Estatísticas
     total_publications: int = Field(default=0, description="Total de publicações")
     total_projects: int = Field(default=0, description="Total de projetos")
+    h_index: Optional[int] = Field(None, description="Índice H calculado")
+    total_citations: Optional[int] = Field(None, description="Total de citações")
     last_update: Optional[datetime] = Field(None, description="Última atualização")
 
 # ==================== MODELOS ORCID ====================
@@ -108,6 +111,7 @@ class ORCIDWork(BaseModel):
     url: Optional[str] = Field(None, description="URL")
     citation_type: Optional[str] = Field(None, description="Tipo de citação")
     citation_value: Optional[str] = Field(None, description="Citação formatada")
+    cited_by: int = Field(default=0, description="Número de citações")
 
 class ORCIDEducation(BaseModel):
     """Educação no ORCID"""
@@ -141,6 +145,11 @@ class ORCIDProfile(BaseModel):
     last_modified_date: Optional[datetime] = Field(None, description="Última modificação")
     claimed: bool = Field(default=True, description="Perfil reivindicado")
     verified_email: bool = Field(default=False, description="Email verificado")
+    
+    # Estatísticas calculadas
+    total_works: int = Field(default=0, description="Total de trabalhos")
+    h_index: Optional[int] = Field(None, description="Índice H calculado")
+    total_citations: Optional[int] = Field(None, description="Total de citações")
 
 # ==================== MODELOS DE BUSCA ====================
 

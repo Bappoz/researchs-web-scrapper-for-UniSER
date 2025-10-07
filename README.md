@@ -21,12 +21,30 @@ Este programa te ajuda a **encontrar informações sobre pesquisadores** de form
 - 📚 **Artigos e trabalhos científicos**
 - 🏛️ **Informações sobre universidades e instituições**
 - 📊 **Estatísticas de publicações e citações**
+- 🔢 **Cálculo automático do Índice H dos pesquisadores**
 
 ### 🎯 Onde ele busca?
 
 - **Google Scholar** - O maior banco de artigos científicos
 - **Plataforma Lattes** - CVs de pesquisadores brasileiros
 - **ORCID** - Identificação internacional de pesquisadores
+
+### 📊 Exportação Profissional em Excel
+
+Uma das principais funcionalidades é a **exportação automática em Excel** com formatação profissional:
+
+- 📋 **Múltiplas abas organizadas**: Resumo, Pesquisadores, Publicações e Métricas
+- 🎨 **Formatação profissional**: Cores, fontes e layouts elegantes
+- 📈 **Métricas acadêmicas**: Índice H, i10-Index, total de citações
+- 📊 **Gráficos e estatísticas**: Visualização clara dos dados
+- 💼 **Pronto para apresentações**: Formato compatível com Excel 2007+
+
+**Exemplo de estrutura do Excel gerado**:
+
+- **Aba Resumo**: Visão geral com estatísticas principais
+- **Aba Pesquisadores**: Lista completa com dados acadêmicos e H-Index
+- **Aba Publicações**: Artigos com título, autores, ano, citações e links
+- **Aba Métricas**: Análises de impacto e indicadores de produtividade
 
 ---
 
@@ -84,7 +102,8 @@ DEBUG=true
 ### 🎉 Passo 4: Rodar o programa
 
 ```bash
-python -m uvicorn api_new:app --reload --host 0.0.0.0 --port 8000
+# IMPORTANTE: Execute este comando da pasta RAIZ do projeto (não da pasta src)
+python -m uvicorn src.api_new:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **Se deu certo**, você verá algo como:
@@ -165,6 +184,74 @@ http://localhost:8000/search/comprehensive?query=Maria Santos&search_type=author
 4. Clique em "Buscar"
 
 **O que você vai ver**: Lista de artigos, autores, ano de publicação, quantas vezes foi citado
+
+---
+
+## 📊 Como usar a Exportação Excel Profissional
+
+### 🎯 Passo a passo para gerar relatórios Excel
+
+1. **Faça uma busca** (qualquer tipo: autor, tema ou completa)
+2. **Aguarde os resultados** aparecerem na tela
+3. **Localize o painel "Exportar Excel Profissional"** na parte inferior direita
+4. **Clique em "Exportar Relatório Excel Profissional"**
+5. **Aguarde a geração** (pode levar alguns segundos)
+6. **Arquivo salvo** automaticamente na pasta `exports/`
+
+### 📁 Onde encontrar os arquivos Excel gerados
+
+```
+web-scrapper/
+├── exports/               ← 📁 Seus relatórios Excel ficam aqui
+│   ├── pesquisa_completa_machine_learning_20251006_013014.xlsx
+│   ├── pesquisa_completa_inteligencia_artificial_20251006_014022.xlsx
+│   └── ...
+```
+
+### 🎨 Estrutura do Excel profissional
+
+Cada arquivo Excel contém **4 abas organizadas**:
+
+#### 📋 Aba 1: **Resumo Executivo**
+
+- 📊 Estatísticas principais da busca
+- 🔢 Total de pesquisadores encontrados
+- 📚 Total de publicações
+- 📈 Total de citações
+- 🏆 Maior H-Index encontrado
+
+#### 👨‍🎓 Aba 2: **Pesquisadores**
+
+- 📝 Nome completo
+- 🏛️ Instituição atual
+- 🔢 H-Index calculado
+- 📊 i10-Index
+- 📈 Total de citações
+- 🔗 Link do perfil
+
+#### 📚 Aba 3: **Publicações**
+
+- 📖 Título do artigo
+- ✍️ Lista de autores
+- 📅 Ano de publicação
+- 📊 Número de citações
+- 🔗 Link para o artigo
+- 🏷️ Plataforma de origem
+
+#### 📈 Aba 4: **Métricas Acadêmicas**
+
+- 🔢 H-Index de cada pesquisador
+- 📊 Distribuição de citações
+- 📈 Análise de produtividade
+- 🏆 Rankings por impacto
+
+### 💡 Dicas para usar os relatórios Excel
+
+- **Filtros automáticos**: Todas as tabelas têm filtros habilitados
+- **Cores organizadas**: Cada tipo de dado tem sua cor
+- **Fórmulas incluídas**: Totais e médias calculados automaticamente
+- **Compatibilidade**: Funciona no Excel 2007+ e LibreOffice Calc
+- **Gráficos prontos**: Dados organizados para criar gráficos facilmente
 
 ---
 

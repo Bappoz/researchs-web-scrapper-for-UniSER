@@ -47,12 +47,16 @@ class AuthorProfile(BaseModel):
     cited_by: Optional[int] = Field(None, description="Total de citações")
     email_domain: Optional[str] = Field(None, description="Domínio do email")
     interests: Optional[List[str]] = Field(None, description="Áreas de interesse")
+    h_index: Optional[int] = Field(None, description="Índice H do autor")
+    i10_index: Optional[int] = Field(None, description="Índice i10 do autor")
 
 class AuthorSummary(BaseModel):
     """Modelo para resumo estatístico do autor"""
     author_name: str = Field(..., description="Nome do autor")
     total_publications: int = Field(..., description="Total de publicações")
     total_citations: int = Field(..., description="Total de citações")
+    h_index: Optional[int] = Field(None, description="Índice H calculado")
+    i10_index: Optional[int] = Field(None, description="Índice i10 calculado")
     year_range: Optional[Dict[str, int]] = Field(None, description="Período de publicações")
     top_cited: List[Dict[str, Any]] = Field(default=[], description="Top 5 mais citadas")
     publications_by_year: Optional[Dict[str, int]] = Field(None, description="Publicações por ano")

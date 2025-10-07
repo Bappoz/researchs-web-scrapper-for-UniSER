@@ -33,14 +33,17 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if ((query.trim() || profileUrl.trim()) && !isLoading) {
-      onSearch({
+      const searchData = {
         query: query.trim(),
         searchType,
         platform,
         profileUrl: profileUrl.trim(),
         maxResults,
         saveFile,
-      });
+      };
+
+      console.log("🔍 Enviando busca:", searchData);
+      onSearch(searchData);
     }
   };
 
