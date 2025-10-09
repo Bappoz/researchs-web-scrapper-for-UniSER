@@ -18,6 +18,8 @@ import {
   Award,
   Building,
   Book,
+  Users,
+  TrendingUp,
 } from "lucide-react";
 
 interface Publication {
@@ -34,6 +36,25 @@ interface Publication {
   platform?: string;
   publication?: string;
   page_number?: number;
+}
+
+interface AuthorInfo {
+  author_id: string;
+  name: string;
+  institution: string;
+  email_domain: string;
+  total_citations: number;
+  research_areas: string[];
+  description: string;
+  profile_url: string;
+  h_index: number;
+  i10_index: number;
+  max_publications?: number; // Número máximo de publicações para extrair
+  recent_publications: Array<{
+    title: string;
+    year: string;
+    cited_by: number;
+  }>;
 }
 
 interface Profile {
@@ -107,6 +128,7 @@ interface ResultsDisplayProps {
     results_by_platform?: ResultsByPlatform;
     publications?: Publication[];
     profiles?: Profile[];
+    authors?: AuthorInfo[]; // Nova propriedade para múltiplos autores
     data?: any;
     researcher_info?: ResearcherInfo;
     total_results?: number;
@@ -117,11 +139,13 @@ interface ResultsDisplayProps {
     platform?: string;
   } | null;
   isLoading?: boolean;
+  onSelectAuthor?: (author: AuthorInfo) => void; // Nova prop para seleção de autor
 }
 
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   results,
   isLoading,
+  onSelectAuthor,
 }) => {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<
@@ -164,6 +188,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     !results ||
     (!results.publications &&
       !results.profiles &&
+      !results.authors &&
       !results.results_by_platform &&
       !results.data)
   ) {
@@ -513,6 +538,200 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Seção de Múltiplos Autores */}
+      {results.search_type === "multiple_authors" && results.authors && (
+        <div className='bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200 p-6'>
+          <div className='mb-4'>
+            <h3 className='text-xl font-bold text-gray-900 mb-2 flex items-center gap-2'>
+              <Users className='h-6 w-6 text-purple-600' />
+              Pesquisadores Encontrados ({results.authors.length})
+            </h3>
+            <p className='text-gray-600'>
+              Selecione um pesquisador para ver suas publicações e poder
+              exportar em Excel
+            </p>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+            {results.authors.map((author, index) => (
+              <div
+                key={author.author_id}
+                className='bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer'
+              >
+                <div className='flex items-start justify-between mb-3'>
+                  <div className='flex-1'>
+                    <h4 className='font-semibold text-gray-900 mb-1'>
+                      {author.name}
+                    </h4>
+                    <div className='flex items-center text-gray-600 text-sm mb-2'>
+                      <Building className='h-4 w-4 mr-1' />
+                      <span className='truncate'>{author.institution}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className='text-sm text-gray-700 mb-3 line-clamp-2'>
+                  {author.description}
+                </p>
+
+                {/* Áreas de pesquisa */}
+                {author.research_areas && author.research_areas.length > 0 && (
+                  <div className='mb-3'>
+                    <div className='flex flex-wrap gap-1'>
+                      {author.research_areas.slice(0, 2).map((area, idx) => (
+                        <span
+                          key={idx}
+                          className='px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full'
+                        >
+                          {area}
+                        </span>
+                      ))}
+                      {author.research_areas.length > 2 && (
+                        <span className='px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full'>
+                          +{author.research_areas.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Métricas */}
+                <div className='flex items-center justify-between text-sm text-gray-600 mb-3'>
+                  <div className='flex items-center'>
+                    <TrendingUp className='h-4 w-4 mr-1' />
+                    <span>
+                      {author.total_citations.toLocaleString()} citações*
+                    </span>
+                  </div>
+                  {author.h_index > 0 && (
+                    <div className='font-medium text-orange-600'>
+                      H-Index: {author.h_index}*
+                      <span className='text-xs text-gray-500 ml-1'>
+                        (estimado)
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Nota explicativa */}
+                <div className='mb-3'>
+                  <p className='text-xs text-gray-500 italic'>
+                    * Valores estimados. Clique no botão abaixo para obter
+                    métricas reais do Google Scholar.
+                  </p>
+                </div>
+
+                {/* Publicações recentes preview */}
+                {author.recent_publications &&
+                  author.recent_publications.length > 0 && (
+                    <div className='border-t pt-3'>
+                      <div className='flex items-center mb-2'>
+                        <Book className='h-4 w-4 text-gray-500 mr-1' />
+                        <span className='text-xs font-medium text-gray-700'>
+                          Publicações Recentes:
+                        </span>
+                      </div>
+                      <div className='space-y-1'>
+                        {author.recent_publications
+                          .slice(0, 1)
+                          .map((pub, idx) => (
+                            <div key={idx} className='text-xs text-gray-600'>
+                              <span className='font-medium'>{pub.title}</span>
+                              {pub.year && (
+                                <span className='text-gray-500'>
+                                  {" "}
+                                  ({pub.year})
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Botão para ver publicações */}
+                <div className='mt-4 pt-3 border-t'>
+                  <button
+                    onClick={() => {
+                      // Abrir Google Scholar em nova aba para o usuário buscar manualmente
+                      const searchUrl = `https://scholar.google.com/citations?hl=pt-BR&view_op=search_authors&mauthors=${encodeURIComponent(
+                        author.name
+                      )}`;
+                      window.open(searchUrl, "_blank");
+
+                      // Mostrar instruções para o usuário
+                      setTimeout(() => {
+                        // Primeiro, perguntar quantas publicações extrair
+                        const numPublications = prompt(
+                          `📚 QUANTAS PUBLICAÇÕES EXTRAIR?\n\n` +
+                            `Escolha o número de publicações para extrair do Google Scholar:\n\n` +
+                            `• 20 (padrão - mais rápido)\n` +
+                            `• 40 (recomendado)\n` +
+                            `• 60 (completo)\n` +
+                            `• 100 (muito completo - pode demorar)\n\n` +
+                            `Digite o número (ou deixe vazio para 20):`,
+                          "20"
+                        );
+
+                        let maxPubs = 20;
+                        if (
+                          numPublications &&
+                          !isNaN(parseInt(numPublications))
+                        ) {
+                          maxPubs = Math.min(
+                            Math.max(parseInt(numPublications), 10),
+                            200
+                          );
+                        }
+
+                        const profileUrl = prompt(
+                          `🔍 INSTRUÇÕES PARA OBTER H-INDEX REAL:\n\n` +
+                            `1. Na aba que acabou de abrir, procure o perfil correto de "${author.name}"\n\n` +
+                            `2. Clique no nome do pesquisador para abrir seu perfil completo\n\n` +
+                            `3. No perfil, você verá as métricas (citações, h-index, i10-index)\n\n` +
+                            `4. Copie a URL COMPLETA da página do perfil (ex: https://scholar.google.com/citations?user=XXXXXXX)\n\n` +
+                            `5. Cole a URL aqui para extrair o H-INDEX REAL e ${maxPubs} publicações:`
+                        );
+
+                        if (profileUrl && profileUrl.trim()) {
+                          // Verificar se é uma URL válida do Google Scholar
+                          if (
+                            profileUrl.includes(
+                              "scholar.google.com/citations?user="
+                            )
+                          ) {
+                            // Redirecionar para busca por URL que extrairá dados reais
+                            if (onSelectAuthor) {
+                              // Criar um autor modificado com a URL real e número de publicações
+                              const authorWithUrl = {
+                                ...author,
+                                profile_url: profileUrl,
+                                author_id: `url_${Date.now()}`, // ID único para URL
+                                description: `Carregando dados reais do Google Scholar... (${maxPubs} publicações)`,
+                                max_publications: maxPubs, // Adicionar número de publicações
+                              };
+                              onSelectAuthor(authorWithUrl);
+                            }
+                          } else {
+                            alert(
+                              `❌ URL inválida!\n\nA URL deve ser do Google Scholar e conter "citations?user="\n\nExemplo: https://scholar.google.com/citations?user=ABC123DEF\n\nTente novamente com a URL correta.`
+                            );
+                          }
+                        }
+                      }, 1500);
+                    }}
+                    className='w-full flex items-center justify-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors'
+                  >
+                    <ExternalLink className='h-4 w-4 mr-1' />
+                    🎯 Obter H-Index Real
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Perfil do Pesquisador */}
       {results.researcher_info && (

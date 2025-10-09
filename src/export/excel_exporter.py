@@ -168,6 +168,137 @@ class ProfessionalExcelExporter:
         
         return worksheet
     
+    def export_api_data(self, api_response: Dict[str, Any], filename_prefix: str = "pesquisa_academica") -> str:
+        """
+        Exporta dados da nossa API diretamente para Excel
+        Formato específico para nossa estrutura de dados
+        """
+        
+        # Gerar nome do arquivo
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        query_clean = re.sub(r'[^\w\-_]', '_', api_response.get('query', 'pesquisa'))[:30]
+        filename = f"{filename_prefix}_{query_clean}_{timestamp}.xlsx"
+        filepath = os.path.join(self.export_dir, filename)
+        
+        # Criar workbook
+        workbook = xlsxwriter.Workbook(filepath)
+        
+        # Definir formatos profissionais
+        formats = self._create_professional_formats(workbook)
+        
+        # Criar aba principal com todas as publicações
+        self._create_api_publications_sheet(workbook, api_response, formats)
+        
+        # Criar aba de resumo
+        self._create_api_summary_sheet(workbook, api_response, formats)
+        
+        workbook.close()
+        return filename
+    
+    def _create_api_publications_sheet(self, workbook, api_response, formats):
+        """Cria aba principal com publicações da nossa API"""
+        worksheet = workbook.add_worksheet('Publicações')
+        
+        # Definir cabeçalhos
+        headers = [
+            'Título da Publicação',
+            'Autores',
+            'Publicação/Venue',
+            'Ano',
+            'Citações',
+            'Plataforma',
+            'Tipo',
+            'Link'
+        ]
+        
+        # Escrever cabeçalhos
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header, formats['header'])
+        
+        # Configurar larguras das colunas
+        column_widths = [50, 30, 25, 8, 10, 12, 12, 40]
+        for i, width in enumerate(column_widths):
+            worksheet.set_column(i, i, width)
+        
+        # Extrair e escrever dados das publicações
+        row = 1
+        publications = api_response.get('data', {}).get('publications', [])
+        
+        for pub in publications:
+            # Alternar cor de fundo para melhor legibilidade
+            data_format = formats['data_alt'] if row % 2 == 0 else formats['data']
+            
+            # Escrever dados da publicação
+            worksheet.write(row, 0, pub.get('title', 'Título não disponível'), data_format)
+            worksheet.write(row, 1, pub.get('authors', 'Autores não disponíveis'), data_format)
+            worksheet.write(row, 2, pub.get('publication', 'Venue não disponível'), data_format)
+            worksheet.write(row, 3, pub.get('year', ''), formats['year'])
+            worksheet.write(row, 4, pub.get('cited_by', 0), formats['number'])
+            worksheet.write(row, 5, pub.get('platform', api_response.get('platform', '')), formats['platform'])
+            worksheet.write(row, 6, pub.get('type', 'article'), data_format)
+            
+            # Link da publicação (se existir)
+            link = pub.get('link', '')
+            if link and link != 'N/A':
+                worksheet.write_url(row, 7, link, formats['link'], 'Ver Publicação')
+            else:
+                worksheet.write(row, 7, 'Link não disponível', data_format)
+            
+            row += 1
+        
+        # Aplicar filtro automático
+        if row > 1:
+            worksheet.autofilter(0, 0, row - 1, len(headers) - 1)
+        
+        # Congelar painel no cabeçalho
+        worksheet.freeze_panes(1, 0)
+        
+        return worksheet
+    
+    def _create_api_summary_sheet(self, workbook, api_response, formats):
+        """Cria aba de resumo para dados da nossa API"""
+        worksheet = workbook.add_worksheet('Resumo')
+        
+        # Título da planilha
+        worksheet.merge_range(0, 0, 0, 3, 'RELATÓRIO DE PESQUISA ACADÊMICA', formats['header'])
+        
+        row = 2
+        
+        # Informações gerais
+        worksheet.write(row, 0, 'Consulta:', formats['header'])
+        worksheet.write(row, 1, api_response.get('query', ''), formats['data'])
+        row += 1
+        
+        worksheet.write(row, 0, 'Plataforma:', formats['header'])
+        worksheet.write(row, 1, api_response.get('platform', ''), formats['data'])
+        row += 1
+        
+        worksheet.write(row, 0, 'Tipo de Busca:', formats['header'])
+        worksheet.write(row, 1, api_response.get('search_type', ''), formats['data'])
+        row += 1
+        
+        worksheet.write(row, 0, 'Total de Resultados:', formats['header'])
+        worksheet.write(row, 1, api_response.get('total_results', 0), formats['number'])
+        row += 2
+        
+        # Informações do pesquisador (se disponível)
+        researcher_info = api_response.get('researcher_info', {})
+        if researcher_info:
+            worksheet.write(row, 0, 'INFORMAÇÕES DO PESQUISADOR:', formats['header'])
+            row += 1
+            
+            for key, value in researcher_info.items():
+                display_key = key.replace('_', ' ').title()
+                worksheet.write(row, 0, f'{display_key}:', formats['data'])
+                worksheet.write(row, 1, str(value), formats['data'])
+                row += 1
+        
+        # Configurar larguras das colunas
+        worksheet.set_column(0, 0, 20)
+        worksheet.set_column(1, 1, 30)
+        
+        return worksheet
+    
     def _extract_all_publications(self, search_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extrai todas as publicações de todas as plataformas"""
         publications = []

@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 
 // Serviços da API
-import { academicService } from "../services/api_new";
-import type { SearchResponse } from "../services/api_new";
+import { academicService, authorsService } from "../services/api_new";
+import type { SearchResponse, AuthorInfo } from "../services/api_new";
 
 // Componentes
 import SearchFormNew from "../components/SearchFormNew";
@@ -26,7 +26,12 @@ import TabsDemo from "../components/TabsDemo";
 
 interface SearchData {
   query: string;
-  searchType: "author" | "topic" | "profile" | "comprehensive";
+  searchType:
+    | "author"
+    | "topic"
+    | "profile"
+    | "comprehensive"
+    | "multiple_authors";
   platform: "scholar" | "lattes" | "orcid" | "all";
   profileUrl?: string;
   maxResults: number;
@@ -48,6 +53,8 @@ const Dashboard: React.FC = () => {
     null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingAuthorPublications, setIsLoadingAuthorPublications] =
+    useState(false);
   const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">(
     "checking"
   );
@@ -94,6 +101,24 @@ const Dashboard: React.FC = () => {
           searchData.profileUrl!,
           searchData.platform === "all" ? undefined : searchData.platform
         );
+      } else if (searchData.searchType === "multiple_authors") {
+        // Nova funcionalidade: buscar múltiplos autores
+        const authorsResult = await authorsService.searchMultipleAuthors(
+          searchData.query,
+          searchData.maxResults
+        );
+
+        // Converter para formato compatível com SearchResponse
+        result = {
+          success: authorsResult.success,
+          message: authorsResult.message,
+          platform: "scholar",
+          search_type: "multiple_authors",
+          query: searchData.query,
+          total_results: authorsResult.total_results,
+          execution_time: authorsResult.execution_time,
+          authors: authorsResult.authors, // Adicionar lista de autores
+        } as any;
       } else if (
         searchData.searchType === "comprehensive" ||
         searchData.platform === "all"
@@ -102,7 +127,9 @@ const Dashboard: React.FC = () => {
           searchData.query,
           searchData.searchType === "comprehensive"
             ? "both"
-            : searchData.searchType,
+            : searchData.searchType === "topic"
+            ? "topic"
+            : "author",
           searchData.platform === "all" ? "all" : searchData.platform,
           searchData.maxResults,
           searchData.saveFile
@@ -206,6 +233,120 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleSelectAuthor = async (author: AuthorInfo) => {
+    setIsLoadingAuthorPublications(true);
+    setError(null);
+
+    try {
+      console.log(`📚 Processando autor selecionado: ${author.name}`);
+
+      // Verificar se o autor tem uma URL real do Google Scholar
+      if (
+        author.profile_url &&
+        author.profile_url.includes("scholar.google.com/citations?user=")
+      ) {
+        console.log(`🔗 Usando busca por URL: ${author.profile_url}`);
+
+        // Usar a busca por URL do perfil (funcionalidade já existente)
+        const maxPublications = author.max_publications || 20;
+        console.log(`📚 Extraindo ${maxPublications} publicações`);
+
+        const result = await academicService.searchByProfileLink(
+          author.profile_url,
+          "scholar",
+          false,
+          maxPublications
+        );
+
+        if (result.success) {
+          // Garantir que o campo query esteja preenchido para exibição correta
+          if (!result.query && result.researcher_info?.name) {
+            result.query = result.researcher_info.name;
+          }
+
+          setSearchResults(result);
+
+          // Salvar no histórico para exportação
+          const historyItem: SearchHistoryItem = {
+            id: Date.now().toString(),
+            query: author.profile_url, // Salvar a URL para re-executar na exportação
+            searchType: "profile",
+            platform: "scholar",
+            timestamp: new Date().toISOString(),
+            totalResults: result.total_results || 0,
+            executionTime: result.execution_time || 0,
+          };
+          saveSearchHistory(historyItem);
+
+          console.log(
+            `✅ Carregado perfil via URL com ${result.total_results} resultados`
+          );
+        } else {
+          setError(result.message || "Erro ao carregar perfil via URL");
+        }
+      } else {
+        // Fallback: buscar usando o nome (método anterior)
+        console.log(`📝 Usando busca por nome: ${author.name}`);
+
+        const result = await authorsService.getAuthorPublications(
+          author.author_id,
+          50,
+          false,
+          author.name
+        );
+
+        if (result.success) {
+          // Converter o resultado para o formato compatível com SearchResponse
+          const newSearchResults: SearchResponse = {
+            success: true,
+            message: `Publicações de ${author.name}`,
+            platform: "scholar",
+            search_type: "author_publications",
+            query: author.name,
+            total_results: result.total_results,
+            execution_time: result.execution_time,
+            publications: result.publications,
+            researcher_info: {
+              name: author.name,
+              institution: author.institution,
+              h_index: author.h_index,
+              total_citations: author.total_citations,
+            },
+          };
+
+          setSearchResults(newSearchResults);
+
+          // Salvar no histórico
+          const historyItem: SearchHistoryItem = {
+            id: Date.now().toString(),
+            query: author.name,
+            searchType: "author_publications",
+            platform: "scholar",
+            timestamp: new Date().toISOString(),
+            totalResults: result.total_results || 0,
+            executionTime: result.execution_time || 0,
+          };
+          saveSearchHistory(historyItem);
+
+          console.log(
+            `✅ Carregadas ${result.total_results} publicações via nome`
+          );
+        } else {
+          setError(result.message || "Erro ao carregar publicações");
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar dados do autor:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro desconhecido ao carregar dados do autor"
+      );
+    } finally {
+      setIsLoadingAuthorPublications(false);
+    }
+  };
+
   const handleRepeatSearch = (historyItem: SearchHistoryItem) => {
     const searchData: SearchData = {
       query: historyItem.query,
@@ -230,7 +371,35 @@ const Dashboard: React.FC = () => {
       let result: SearchResponse;
 
       // Verificar o tipo de busca atual pelos dados disponíveis
-      if (searchResults.results_by_platform) {
+      if (
+        searchResults.researcher_info &&
+        searchResults.platform === "scholar"
+      ) {
+        // Busca por perfil do Scholar - re-executar com export_excel
+        const query =
+          searchResults.query ||
+          searchResults.researcher_info.name ||
+          "Scholar Profile";
+
+        console.log(`📊 Exportando perfil do Scholar: ${query}`);
+
+        // Se temos uma URL de perfil, usar searchByProfileLink
+        const lastSearch = searchHistory[0];
+        if (lastSearch && lastSearch.searchType === "profile") {
+          result = await academicService.searchByProfileLink(
+            lastSearch.query, // URL do perfil
+            "scholar",
+            true // exportExcel = true
+          );
+        } else {
+          // Fallback: buscar por nome
+          result = await academicService.searchAuthorScholar(
+            query,
+            10,
+            true // exportExcel = true
+          );
+        }
+      } else if (searchResults.results_by_platform) {
         // Busca comprehensiva - usar comprehensiveSearch com export_excel
         const lastSearch = searchHistory[0];
         const query =
@@ -377,9 +546,24 @@ const Dashboard: React.FC = () => {
       );
     } else {
       // Busca específica
-      if (searchResults.data?.publications) {
+      // Verificar publicações diretas primeiro
+      if (searchResults.publications && searchResults.publications.length > 0) {
+        totalPublications = searchResults.publications.length;
+      }
+      // Depois verificar dentro de data
+      else if (searchResults.data?.publications) {
         totalPublications = searchResults.data.publications.length;
       }
+
+      // Contar autores
+      if (
+        searchResults.researcher_info ||
+        searchResults.author_profile ||
+        searchResults.data?.author_profile
+      ) {
+        totalAuthors = 1; // Um autor encontrado
+      }
+
       if (searchResults.data?.lattes_profiles) {
         totalAuthors = searchResults.data.lattes_profiles.length;
         searchResults.data.lattes_profiles.forEach((profile: any) => {
@@ -538,7 +722,11 @@ const Dashboard: React.FC = () => {
 
             {/* Resultados */}
             {searchResults && (
-              <ResultsDisplay results={searchResults} isLoading={isLoading} />
+              <ResultsDisplay
+                results={searchResults}
+                isLoading={isLoading || isLoadingAuthorPublications}
+                onSelectAuthor={handleSelectAuthor}
+              />
             )}
           </div>
 

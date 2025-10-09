@@ -127,6 +127,14 @@ export interface SearchResponse {
   data_sources?: string[];
   data?: any;
   results_by_platform?: any;
+  // Novos campos para suporte ao perfil do autor
+  author_profile?: any;
+  researcher_info?: {
+    name: string;
+    institution?: string;
+    h_index?: number;
+    total_citations?: number;
+  };
 }
 
 // ==================== SERVIÇOS REORGANIZADOS ====================
@@ -168,7 +176,8 @@ export const academicService = {
   async searchByProfileLink(
     profileUrl: string,
     platform?: string,
-    exportExcel = false
+    exportExcel = false,
+    maxPublications = 20
   ): Promise<SearchResponse> {
     // Extrair o query do profileUrl (nome do autor)
     let query = "Autor";
@@ -176,6 +185,14 @@ export const academicService = {
 
     if (profileUrl.includes("leonardo")) {
       query = "Leonardo";
+    } else if (profileUrl.includes("scholar.google.com")) {
+      // Para Google Scholar, extrair nome da URL se possível
+      const urlParams = new URLSearchParams(profileUrl.split("?")[1]);
+      const userParam = urlParams.get("user");
+      if (userParam) {
+        query = `Scholar-${userParam}`;
+      }
+      detectedPlatform = "scholar";
     } else if (profileUrl.includes("orcid.org")) {
       // Para ORCID, usar parte do ID como query
       const idMatch = profileUrl.match(/\/(\d{4}-\d{4}-\d{4}-\d{4})$/);
@@ -195,8 +212,9 @@ export const academicService = {
     const data: any = {
       query: query,
       export_excel: exportExcel,
-      platforms: detectedPlatform || "orcid",
+      platforms: detectedPlatform || "scholar",
       profile_url: profileUrl, // Enviar a URL original também
+      max_publications: maxPublications, // Número de publicações a extrair
     };
 
     console.log("🔍 Enviando POST para /search/author/profile:", data);
@@ -298,6 +316,49 @@ export const scholarService = {
   },
 };
 
+export interface AuthorInfo {
+  author_id: string;
+  name: string;
+  institution: string;
+  email_domain: string;
+  total_citations: number;
+  research_areas: string[];
+  description: string;
+  profile_url: string;
+  h_index: number;
+  i10_index: number;
+  max_publications?: number; // Número máximo de publicações para extrair
+  recent_publications: Array<{
+    title: string;
+    year: string;
+    cited_by: number;
+  }>;
+}
+
+export interface AuthorsSearchResponse {
+  success: boolean;
+  message: string;
+  query: string;
+  search_type: string;
+  platform: string;
+  total_results: number;
+  authors: AuthorInfo[];
+  execution_time: number;
+}
+
+export interface AuthorPublicationsResponse {
+  success: boolean;
+  message: string;
+  author_id: string;
+  search_type: string;
+  platform: string;
+  total_results: number;
+  publications: Publication[];
+  execution_time: number;
+  excel_file?: string;
+  excel_error?: string;
+}
+
 export const lattesService = {
   async search(name: string, maxResults = 10): Promise<SearchResponse> {
     return academicService.searchAuthorLattes(name, maxResults);
@@ -307,6 +368,66 @@ export const lattesService = {
 export const orcidService = {
   async search(name: string, maxResults = 10): Promise<SearchResponse> {
     return academicService.searchAuthorOrcid(name, maxResults);
+  },
+};
+
+// ==================== NOVOS SERVIÇOS PARA MÚLTIPLOS AUTORES ====================
+
+export const authorsService = {
+  /**
+   * Busca múltiplos autores por nome no Google Scholar
+   */
+  async searchMultipleAuthors(
+    authorName: string,
+    maxResults = 10
+  ): Promise<AuthorsSearchResponse> {
+    try {
+      const response = await api.get("/search/authors/scholar", {
+        params: {
+          name: authorName,
+          max_results: maxResults,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("Erro na busca de múltiplos autores:", error);
+      throw new Error(
+        error.response?.data?.detail || "Erro na busca de autores"
+      );
+    }
+  },
+
+  /**
+   * Busca todas as publicações de um autor específico
+   */
+  async getAuthorPublications(
+    authorId: string,
+    maxResults = 50,
+    exportExcel = false,
+    authorName?: string
+  ): Promise<AuthorPublicationsResponse> {
+    try {
+      const params: any = {
+        max_results: maxResults,
+        export_excel: exportExcel,
+      };
+
+      // Adicionar nome do autor se fornecido
+      if (authorName) {
+        params.author_name = authorName;
+      }
+
+      const response = await api.get(
+        `/search/author/publications/${authorId}`,
+        { params }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Erro na busca de publicações do autor:", error);
+      throw new Error(
+        error.response?.data?.detail || "Erro na busca de publicações"
+      );
+    }
   },
 };
 

@@ -4,12 +4,25 @@
  */
 
 import React, { useState } from "react";
-import { Search, Loader2, User, BookOpen, Link, Globe } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  User,
+  BookOpen,
+  Link,
+  Globe,
+  Users,
+} from "lucide-react";
 
 interface SearchFormProps {
   onSearch: (searchData: {
     query: string;
-    searchType: "author" | "topic" | "profile" | "comprehensive";
+    searchType:
+      | "author"
+      | "topic"
+      | "profile"
+      | "comprehensive"
+      | "multiple_authors";
     platform: "scholar" | "lattes" | "orcid" | "all";
     profileUrl?: string;
     maxResults: number;
@@ -22,7 +35,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading }) => {
   const [query, setQuery] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
   const [searchType, setSearchType] = useState<
-    "author" | "topic" | "profile" | "comprehensive"
+    "author" | "topic" | "profile" | "comprehensive" | "multiple_authors"
   >("author");
   const [platform, setPlatform] = useState<
     "scholar" | "lattes" | "orcid" | "all"
@@ -55,10 +68,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading }) => {
       description: "Buscar por nome do pesquisador",
     },
     {
-      value: "topic",
-      label: "Buscar Tema",
-      icon: BookOpen,
-      description: "Buscar por tema/área de pesquisa",
+      value: "multiple_authors",
+      label: "Múltiplos Pesquisadores",
+      icon: Users,
+      description: "Encontrar vários pesquisadores por nome",
     },
     {
       value: "profile",
@@ -89,7 +102,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading }) => {
           <label className='block text-sm font-medium text-gray-700 mb-3'>
             Tipo de Busca
           </label>
-          <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
+          <div className='grid grid-cols-1 md:grid-cols-5 gap-3'>
             {searchTypeOptions.map((option) => {
               const IconComponent = option.icon;
               return (
@@ -157,6 +170,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading }) => {
               >
                 {searchType === "author"
                   ? "Nome do Pesquisador"
+                  : searchType === "multiple_authors"
+                  ? "Nome para Buscar Múltiplos Pesquisadores"
                   : searchType === "topic"
                   ? "Tema de Pesquisa"
                   : "Termo de Busca"}
@@ -170,6 +185,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading }) => {
                   placeholder={
                     searchType === "author"
                       ? "Ex: João Silva"
+                      : searchType === "multiple_authors"
+                      ? "Ex: Silva, Santos, Maria - encontrará vários pesquisadores"
                       : searchType === "topic"
                       ? "Ex: machine learning"
                       : "Ex: inteligência artificial"

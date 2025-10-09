@@ -15,19 +15,27 @@ _Perfeito para estudantes, professores e pesquisadores_
 
 ## 🤔 O que este programa faz?
 
-Este programa te ajuda a **encontrar informações sobre pesquisadores** de forma rápida e organizada. É como um "Google" especializado em buscar:
+Este programa te ajuda a **encontrar pesquisadores e suas publicações** de forma rápida e organizada. É como um "Google" especializado em buscar:
 
-- 👨‍🎓 **Perfis de professores e pesquisadores**
-- 📚 **Artigos e trabalhos científicos**
+- 👨‍🎓 **Múltiplos perfis de pesquisadores por nome**
+- 📚 **Lista completa de publicações de cada pesquisador**
 - 🏛️ **Informações sobre universidades e instituições**
 - 📊 **Estatísticas de publicações e citações**
 - 🔢 **Cálculo automático do Índice H dos pesquisadores**
+- 🎯 **Sistema de seleção de pesquisadores para exportação**
 
-### 🎯 Onde ele busca?
+### 🎯 Como funciona?
 
-- **Google Scholar** - O maior banco de artigos científicos
-- **Plataforma Lattes** - CVs de pesquisadores brasileiros
-- **ORCID** - Identificação internacional de pesquisadores
+1. **Digite um nome** (ex: "Silva", "Santos", "Maria")
+2. **Veja múltiplos pesquisadores** com esse nome
+3. **Selecione o pesquisador** que você quer analisar
+4. **Exporte todas as publicações** em Excel profissional
+
+### 📊 Onde ele busca?
+
+- **Google Scholar** - O maior banco de artigos científicos do mundo
+- **Busca inteligente de pesquisadores** - Encontra múltiplos perfis por nome
+- **Dados completos** - Instituição, áreas de pesquisa, índices acadêmicos
 
 ### 📊 Exportação Profissional em Excel
 
@@ -103,7 +111,7 @@ DEBUG=true
 
 ```bash
 # IMPORTANTE: Execute este comando da pasta RAIZ do projeto (não da pasta src)
-python -m uvicorn src.api_new:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **Se deu certo**, você verá algo como:
@@ -136,54 +144,73 @@ Agora abra seu navegador em: **http://localhost:3000**
 
 Você pode fazer buscas direto pelo navegador visitando essas URLs:
 
-#### 🔍 Buscar um pesquisador:
+#### 🔍 Buscar pesquisadores:
 
 ```
-http://localhost:8000/search/author/scholar?name=João Silva&max_results=5
+http://localhost:8000/search/authors/scholar?name=Silva&max_results=10
 ```
 
-#### 📚 Buscar por tema:
+#### 📚 Buscar publicações de um pesquisador específico:
 
 ```
-http://localhost:8000/search/topic/scholar?topic=inteligência artificial&max_results=10
+http://localhost:8000/search/author/publications/AUTHOR_ID?max_results=50&export_excel=true
 ```
 
-#### 🌐 Buscar em todas as plataformas:
+#### 🌐 Verificar status da API:
 
 ```
-http://localhost:8000/search/comprehensive?query=Maria Santos&search_type=author&platforms=all&max_results=3
+http://localhost:8000/health
 ```
 
 ---
 
 ## 💡 Exemplos práticos
 
-### 🎯 Exemplo 1: Encontrar um professor
+### 🎯 Exemplo 1: Encontrar pesquisadores chamados "Silva"
 
-**O que você quer**: Informações sobre o professor "Carlos Silva"
+**O que você quer**: Ver todos os pesquisadores com sobrenome "Silva"
 
 **Como fazer**:
 
 1. Abra: http://localhost:3000
-2. Escolha "Busca por autor"
-3. Digite: "Carlos Silva"
-4. Selecione "Todas as plataformas"
-5. Clique em "Buscar"
+2. Digite: "Silva"
+3. Clique em "Buscar Pesquisadores"
+4. **Veja a lista** de pesquisadores encontrados
+5. **Selecione um pesquisador** para ver detalhes
+6. **Clique em "Exportar para Excel"** para baixar todas as publicações
 
-**O que você vai ver**: Perfis, artigos, universidade onde trabalha, áreas de pesquisa
+**O que você vai ver**: Lista de pesquisadores, suas instituições, áreas de pesquisa, índices acadêmicos
 
-### 🎯 Exemplo 2: Pesquisar sobre um tema
+### 🎯 Exemplo 2: Analisar um pesquisador específico
 
-**O que você quer**: Artigos sobre "inteligência artificial"
+**O que você quer**: Dados completos de um pesquisador específico
 
 **Como fazer**:
 
-1. Escolha "Busca por tema"
-2. Digite: "inteligência artificial"
-3. Selecione "Google Scholar"
-4. Clique em "Buscar"
+1. Busque pelo nome (ex: "João Santos")
+2. **Veja a lista** com múltiplos "João Santos"
+3. **Leia as descrições** (instituição, área de pesquisa)
+4. **Selecione o pesquisador correto**
+5. **Visualize todas as publicações**
+6. **Exporte em Excel profissional**
 
-**O que você vai ver**: Lista de artigos, autores, ano de publicação, quantas vezes foi citado
+**O que você vai ver**: Publicações completas, citações, anos, co-autores, estatísticas
+
+### 🎯 Exemplo 3: Comparar pesquisadores
+
+**O que você quer**: Comparar diferentes pesquisadores com o mesmo nome
+
+**Como fazer**:
+
+1. Busque um nome comum (ex: "Maria")
+2. **Veja múltiplos perfis** de pesquisadoras
+3. **Compare as descrições**:
+   - Universidade onde trabalham
+   - Áreas de especialização
+   - Número de citações
+   - Índice H
+4. **Selecione cada uma** para análise detalhada
+5. **Exporte os dados** de cada uma separadamente
 
 ---
 
@@ -330,23 +357,26 @@ Pressione `Ctrl + C` no terminal
 
 ## 🎁 Exemplos de uso na vida real
 
-### 👨‍🎓 **Para estudantes**:
+### � Para estudantes
 
-- Encontrar professores especialistas em sua área de interesse
-- Descobrir quais universidades têm os melhores pesquisadores
-- Achar artigos relevantes para seu TCC ou dissertação
+- **Encontrar orientadores** especialistas em sua área de interesse
+- **Descobrir pesquisadores** nas universidades que você quer estudar
+- **Achar referências** e trabalhos relevantes para seu TCC ou dissertação
+- **Identificar colaborações** entre pesquisadores da sua área
 
-### 👩‍🏫 **Para professores**:
+### 👩‍🏫 Para professores
 
-- Encontrar colaboradores para pesquisa
-- Verificar o que outros estão pesquisando na sua área
-- Acompanhar publicações de colegas
+- **Encontrar colaboradores** para pesquisa na sua área
+- **Verificar produção científica** de colegas e concorrentes
+- **Acompanhar publicações** de pesquisadores específicos
+- **Mapear o campo de pesquisa** da sua especialização
 
-### 🏛️ **Para instituições**:
+### 🏛️ Para instituições
 
-- Mapear pesquisadores por área
-- Analisar produção científica
-- Encontrar possíveis parceiros para projetos
+- **Mapear pesquisadores** por área de conhecimento
+- **Analisar produção científica** institucional
+- **Encontrar possíveis parceiros** para projetos de pesquisa
+- **Avaliar impacto acadêmico** de pesquisadores
 
 ---
 
