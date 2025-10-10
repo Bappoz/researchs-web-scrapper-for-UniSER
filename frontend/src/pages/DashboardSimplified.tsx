@@ -60,6 +60,7 @@ const Dashboard: React.FC = () => {
   );
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [filterByKeywords, setFilterByKeywords] = useState(true); // Novo estado para filtro
 
   useEffect(() => {
     checkApiStatus();
@@ -99,7 +100,10 @@ const Dashboard: React.FC = () => {
       if (searchData.searchType === "profile") {
         result = await academicService.searchByProfileLink(
           searchData.profileUrl!,
-          searchData.platform === "all" ? undefined : searchData.platform
+          searchData.platform === "all" ? undefined : searchData.platform,
+          false, // exportExcel
+          20, // maxPublications
+          filterByKeywords // Usar o estado do filtro
         );
       } else if (searchData.searchType === "multiple_authors") {
         // Nova funcionalidade: buscar múltiplos autores
@@ -255,7 +259,8 @@ const Dashboard: React.FC = () => {
           author.profile_url,
           "scholar",
           false,
-          maxPublications
+          maxPublications,
+          filterByKeywords // Usar o estado do filtro
         );
 
         if (result.success) {
@@ -352,7 +357,7 @@ const Dashboard: React.FC = () => {
       query: historyItem.query,
       searchType: historyItem.searchType as any,
       platform: historyItem.platform as any,
-      maxResults: 10,
+      maxResults: 20, // Usar valor padrão adequado
       saveFile: false,
     };
     handleSearch(searchData);
@@ -389,7 +394,9 @@ const Dashboard: React.FC = () => {
           result = await academicService.searchByProfileLink(
             lastSearch.query, // URL do perfil
             "scholar",
-            true // exportExcel = true
+            true, // exportExcel = true
+            20, // maxPublications
+            filterByKeywords // Usar o estado do filtro
           );
         } else {
           // Fallback: buscar por nome
@@ -676,6 +683,38 @@ const Dashboard: React.FC = () => {
           <div className='lg:col-span-3 space-y-8'>
             {/* Formulário de Busca */}
             <SearchFormNew onSearch={handleSearch} isLoading={isLoading} />
+
+            {/* Filtro por Keywords */}
+            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-4'>
+              <div className='flex items-center space-x-3'>
+                <input
+                  type='checkbox'
+                  id='keywordFilter'
+                  checked={filterByKeywords}
+                  onChange={(e) => setFilterByKeywords(e.target.checked)}
+                  className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+                />
+                <label
+                  htmlFor='keywordFilter'
+                  className='text-sm font-medium text-gray-700 cursor-pointer'
+                >
+                  Filtrar apenas publicações relacionadas ao
+                  envelhecimento/idosos
+                </label>
+                <div className='text-xs text-gray-500'>
+                  ({filterByKeywords ? "Ativo" : "Inativo"})
+                </div>
+              </div>
+              {filterByKeywords && (
+                <div className='mt-2 text-xs text-gray-500'>
+                  <p>
+                    Filtrando por: aging, elderly, senior, geriatric, alzheimer,
+                    dementia, parkinson, idoso, envelhecimento, geriátrico,
+                    alzheimer, demência, parkinson e mais...
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* Estatísticas */}
             {statsData && (

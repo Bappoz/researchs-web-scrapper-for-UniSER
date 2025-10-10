@@ -4,7 +4,13 @@
  */
 
 import React, { useState } from "react";
-import { Download, FileSpreadsheet, CheckCircle, Loader2 } from "lucide-react";
+import {
+  Download,
+  FileSpreadsheet,
+  CheckCircle,
+  Loader2,
+  BarChart3,
+} from "lucide-react";
 import type { SearchResponse } from "../services/api_new";
 
 interface ExportPanelProps {
@@ -20,6 +26,10 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
 }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const [consolidatedStatus, setConsolidatedStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
 
   const handleExportExcel = async () => {
     if (!onExportExcel) {
@@ -53,6 +63,76 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       console.error("Erro ao exportar Excel:", error);
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleDownloadConsolidated = async () => {
+    setIsExporting(true);
+    setConsolidatedStatus({ type: null, message: "" });
+
+    try {
+      const response = await fetch("http://localhost:8000/export/consolidated");
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `excel_consolidado_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setConsolidatedStatus({
+        type: "success",
+        message: "Excel consolidado baixado com sucesso! 📊",
+      });
+    } catch (error) {
+      setConsolidatedStatus({
+        type: "error",
+        message: `Erro ao baixar Excel consolidado: ${error}`,
+      });
+    } finally {
+      setIsExporting(false);
+      // Limpar status após 4 segundos
+      setTimeout(() => {
+        setConsolidatedStatus({ type: null, message: "" });
+      }, 4000);
+    }
+  };
+
+  const handleViewStats = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/mongodb/stats");
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const stats = data.stats || {};
+
+      const statsMessage =
+        `📊 Estatísticas do Banco de Dados:\n\n` +
+        `🔍 Total de Pesquisas: ${stats.total_searches || 0}\n` +
+        `📚 Pesquisas Filtradas: ${stats.filtered_searches || 0}\n` +
+        `📝 Total de Publicações: ${stats.total_publications || 0}\n` +
+        `🌐 Plataformas: ${stats.platforms?.join(", ") || "Nenhuma"}\n` +
+        `📅 Última Busca: ${
+          stats.latest_search
+            ? new Date(stats.latest_search).toLocaleString("pt-BR")
+            : "N/A"
+        }`;
+
+      alert(statsMessage);
+    } catch (error) {
+      alert(`❌ Erro ao carregar estatísticas: ${error}`);
     }
   };
 
@@ -186,6 +266,72 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
                 <span className='font-medium'>
                   Excel exportado com sucesso!
                 </span>
+              </div>
+            )}
+          </div>
+
+          {/* Seção de Relatórios Consolidados */}
+          <div className='bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-lg p-4'>
+            <div className='flex items-center justify-between mb-3'>
+              <div>
+                <h4 className='text-sm font-bold text-gray-900'>
+                  📊 Relatórios Consolidados
+                </h4>
+                <p className='text-xs text-gray-600 mt-1'>
+                  Excel com TODAS as pesquisas filtradas do banco de dados
+                </p>
+              </div>
+              <BarChart3 className='h-8 w-8 text-purple-600' />
+            </div>
+
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3'>
+              <button
+                onClick={handleDownloadConsolidated}
+                disabled={isExporting}
+                className='flex items-center justify-center p-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium rounded-lg transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm'
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className='h-4 w-4 animate-spin mr-1' />
+                    Exportando...
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className='h-4 w-4 mr-1' />
+                    Excel Consolidado
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={handleViewStats}
+                disabled={isExporting}
+                className='flex items-center justify-center p-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium rounded-lg transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm'
+              >
+                <BarChart3 className='h-4 w-4 mr-1' />
+                Ver Estatísticas
+              </button>
+            </div>
+
+            {/* Status da exportação consolidada */}
+            {consolidatedStatus.type && (
+              <div
+                className={`text-xs rounded-lg p-2 border-2 ${
+                  consolidatedStatus.type === "success"
+                    ? "bg-green-50 border-green-200 text-green-700"
+                    : "bg-red-50 border-red-200 text-red-700"
+                }`}
+              >
+                <div className='flex items-center'>
+                  {consolidatedStatus.type === "success" ? (
+                    <CheckCircle className='h-4 w-4 mr-2' />
+                  ) : (
+                    <BarChart3 className='h-4 w-4 mr-2' />
+                  )}
+                  <span className='font-medium'>
+                    {consolidatedStatus.message}
+                  </span>
+                </div>
               </div>
             )}
           </div>

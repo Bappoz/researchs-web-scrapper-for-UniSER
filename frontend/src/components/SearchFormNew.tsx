@@ -40,7 +40,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading }) => {
   const [platform, setPlatform] = useState<
     "scholar" | "lattes" | "orcid" | "all"
   >("all");
-  const [maxResults, setMaxResults] = useState(10);
+  const [maxResults, setMaxResults] = useState(20);
   const [saveFile, setSaveFile] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -256,7 +256,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading }) => {
               <option value={5}>5 resultados</option>
               <option value={10}>10 resultados</option>
               <option value={20}>20 resultados</option>
+              <option value={30}>30 resultados</option>
+              <option value={40}>40 resultados</option>
               <option value={50}>50 resultados</option>
+              <option value={60}>60 resultados</option>
+              <option value={70}>70 resultados</option>
+              <option value={80}>80 resultados</option>
             </select>
           </div>
 

@@ -18,7 +18,7 @@ const AuthorSearchForm: React.FC<AuthorSearchFormProps> = ({
   disabled,
 }) => {
   const [authorName, setAuthorName] = useState("");
-  const [maxResults, setMaxResults] = useState(10);
+  const [maxResults, setMaxResults] = useState(20);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,8 +86,10 @@ const AuthorSearchForm: React.FC<AuthorSearchFormProps> = ({
           >
             <option value={5}>5 pesquisadores</option>
             <option value={10}>10 pesquisadores</option>
-            <option value={15}>15 pesquisadores</option>
             <option value={20}>20 pesquisadores</option>
+            <option value={30}>30 pesquisadores</option>
+            <option value={40}>40 pesquisadores</option>
+            <option value={50}>50 pesquisadores</option>
           </select>
         </div>
 

@@ -69,6 +69,76 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
     }
   };
 
+  const handleDownloadConsolidated = async () => {
+    setIsExporting(true);
+    setExportStatus({ type: null, message: "" });
+
+    try {
+      const response = await fetch("http://localhost:8000/export/consolidated");
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `excel_consolidado_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setExportStatus({
+        type: "success",
+        message: "Excel consolidado baixado com sucesso! 📊",
+      });
+    } catch (error) {
+      setExportStatus({
+        type: "error",
+        message: `Erro ao baixar Excel consolidado: ${error}`,
+      });
+    } finally {
+      setIsExporting(false);
+      // Limpar status após 4 segundos
+      setTimeout(() => {
+        setExportStatus({ type: null, message: "" });
+      }, 4000);
+    }
+  };
+
+  const handleViewStats = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/mongodb/stats");
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const stats = data.stats || {};
+
+      const statsMessage =
+        `📊 Estatísticas do Banco de Dados:\n\n` +
+        `🔍 Total de Pesquisas: ${stats.total_searches || 0}\n` +
+        `📚 Pesquisas Filtradas: ${stats.filtered_searches || 0}\n` +
+        `📝 Total de Publicações: ${stats.total_publications || 0}\n` +
+        `🌐 Plataformas: ${stats.platforms?.join(", ") || "Nenhuma"}\n` +
+        `📅 Última Busca: ${
+          stats.latest_search
+            ? new Date(stats.latest_search).toLocaleString("pt-BR")
+            : "N/A"
+        }`;
+
+      alert(statsMessage);
+    } catch (error) {
+      alert(`❌ Erro ao carregar estatísticas: ${error}`);
+    }
+  };
+
   const getResultStatistics = () => {
     if (!results)
       return { authors: 0, publications: 0, totalCitations: 0, maxHIndex: 0 };
@@ -268,6 +338,73 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
                 </>
               )}
             </button>
+          </div>
+
+          {/* Seção de Relatórios Consolidados */}
+          <div className='bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-6'>
+            <div className='flex items-center justify-between mb-4'>
+              <div>
+                <h4 className='text-lg font-bold text-gray-900'>
+                  📊 Relatórios Consolidados
+                </h4>
+                <p className='text-sm text-gray-600 mt-1'>
+                  Excel com TODAS as pesquisas filtradas do banco de dados
+                </p>
+              </div>
+              <BarChart3 className='h-12 w-12 text-purple-600' />
+            </div>
+
+            <div className='bg-white rounded-lg p-4 mb-4'>
+              <h5 className='font-semibold text-gray-800 mb-2'>
+                Relatório consolidado inclui:
+              </h5>
+              <ul className='text-sm text-gray-600 space-y-1'>
+                <li>
+                  ✅ <strong>Resumo Executivo:</strong> Estatísticas de todas as
+                  buscas
+                </li>
+                <li>
+                  ✅ <strong>Dados Agregados:</strong> Todos os pesquisadores e
+                  publicações
+                </li>
+                <li>
+                  ✅ <strong>Métricas Globais:</strong> Análise cross-platform
+                </li>
+                <li>
+                  ✅ <strong>Filtros Aplicados:</strong> Apenas dados com
+                  keywords de aging
+                </li>
+              </ul>
+            </div>
+
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+              <button
+                onClick={handleDownloadConsolidated}
+                disabled={isExporting}
+                className='flex items-center justify-center p-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl'
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className='h-5 w-5 animate-spin mr-2' />
+                    Exportando...
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className='h-5 w-5 mr-2' />
+                    Excel Consolidado
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={handleViewStats}
+                disabled={isExporting}
+                className='flex items-center justify-center p-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl'
+              >
+                <BarChart3 className='h-5 w-5 mr-2' />
+                Ver Estatísticas
+              </button>
+            </div>
           </div>
 
           {/* Status da exportação */}

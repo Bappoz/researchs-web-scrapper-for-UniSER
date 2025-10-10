@@ -10,6 +10,40 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import re
 
+# Palavras-chave para filtragem de publicações relacionadas ao envelhecimento
+KEYWORDS = [
+    # Institucional
+    'UniSER', 'UnB',
+
+    # População Alvo (Português, Inglês, Espanhol)
+    'idoso', 'idosa', 'idosos', 'pessoa idosa', 'terceira idade', 'melhor idade', 'longevo',
+    'elderly', 'older adult', 'senior', 'aged', 'third age', 'long-lived',
+    'anciano', 'persona mayor', 'adulto mayor', 'tercera edad',
+
+    # Processo Biológico/Social
+    'envelhecimento', 'envelhecer', 'longevidade',
+    'aging', 'ageing', 'longevity',
+    'envejecimiento', 'envejecer', 'longevidad',
+    'senescência', 'senescente', 'senescence', 'senescent', 'senescencia',
+    'senilidade', 'senility',
+
+    # Áreas de Estudo
+    'gerontologia', 'gerontológico', 'gerontology', 'gerontological', 'gerontología',
+    'geriatria', 'geriátrico', 'geriatrics', 'geriatric', 'geriatría',
+
+    # Saúde e Bem-Estar
+    'qualidade de vida', 'bem-estar',
+    'quality of life', 'well-being', 'wellness',
+    'calidad de vida', 'bienestar',
+    'saúde do idoso', 'elderly health', 'senior health', 'salud del adulto mayor',
+    'autonomia', 'capacidade funcional', 'autonomy', 'functional capacity',
+
+    # Educação e Sociedade
+    'educação permanente', 'educação continuada', 'lifelong learning', 'continuing education', 'educación permanente',
+    'inclusão social', 'inclusão digital', 'social inclusion', 'digital inclusion', 'inclusión social',
+    'universidade aberta', 'open university'
+]
+
 class ProfessionalExcelExporter:
     """Exportador profissional focado em publicações por linha"""
     
@@ -52,6 +86,67 @@ class ProfessionalExcelExporter:
         
         workbook.close()
         return filename
+    
+    def _find_keywords_in_publication(self, publication: Dict[str, Any]) -> List[str]:
+        """
+        Encontra palavras-chave relacionadas ao envelhecimento em uma publicação
+        
+        Args:
+            publication: Dicionário com dados da publicação
+            
+        Returns:
+            Lista de palavras-chave encontradas
+        """
+        found_keywords = []
+        
+        # Campos de texto para pesquisar
+        text_fields = [
+            publication.get('title', ''),
+            publication.get('authors', ''),
+            publication.get('publication', ''),
+            publication.get('snippet', ''),
+            publication.get('abstract', '')  # Caso tenha resumo
+        ]
+        
+        # Juntar todos os textos em uma string única
+        full_text = ' '.join(text_fields).lower()
+        
+        # Buscar cada palavra-chave
+        for keyword in KEYWORDS:
+            keyword_lower = keyword.lower()
+            
+            # Busca por palavra completa (evita falsos positivos)
+            # Usando regex para garantir que seja uma palavra completa
+            pattern = r'\b' + re.escape(keyword_lower) + r'\b'
+            
+            if re.search(pattern, full_text):
+                found_keywords.append(keyword)
+        
+        return found_keywords
+    
+    def _filter_publications_by_keywords(self, publications: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Filtra publicações que contêm pelo menos uma palavra-chave relacionada ao envelhecimento
+        
+        Args:
+            publications: Lista de publicações
+            
+        Returns:
+            Lista de publicações filtradas com keywords encontradas
+        """
+        filtered_publications = []
+        
+        for pub in publications:
+            keywords_found = self._find_keywords_in_publication(pub)
+            
+            if keywords_found:  # Se encontrou pelo menos uma keyword
+                # Adicionar as keywords encontradas ao dicionário da publicação
+                pub_with_keywords = pub.copy()
+                pub_with_keywords['keywords_found'] = keywords_found
+                pub_with_keywords['keywords_text'] = '; '.join(keywords_found)
+                filtered_publications.append(pub_with_keywords)
+        
+        return filtered_publications
     
     def _create_professional_formats(self, workbook):
         """Cria formatos profissionais para o Excel"""
@@ -168,16 +263,41 @@ class ProfessionalExcelExporter:
         
         return worksheet
     
-    def export_api_data(self, api_response: Dict[str, Any], filename_prefix: str = "pesquisa_academica") -> str:
+    def export_api_data(self, api_response: Dict[str, Any], filename_prefix: str = "pesquisa_academica", filter_by_keywords: bool = True) -> str:
         """
         Exporta dados da nossa API diretamente para Excel
         Formato específico para nossa estrutura de dados
+        
+        Args:
+            api_response: Resposta da API com dados das publicações
+            filename_prefix: Prefixo do nome do arquivo
+            filter_by_keywords: Se True, filtra apenas publicações com keywords relacionadas ao envelhecimento
         """
+        
+        # Filtrar publicações por keywords se solicitado
+        if filter_by_keywords:
+            publications = api_response.get('data', {}).get('publications', [])
+            filtered_publications = self._filter_publications_by_keywords(publications)
+            
+            # Criar uma cópia da resposta com publicações filtradas
+            filtered_response = api_response.copy()
+            filtered_response['data'] = {'publications': filtered_publications}
+            filtered_response['total_results'] = len(filtered_publications)
+            filtered_response['filtered_by_keywords'] = True
+            
+            api_data = filtered_response
+        else:
+            api_data = api_response
         
         # Gerar nome do arquivo
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        query_clean = re.sub(r'[^\w\-_]', '_', api_response.get('query', 'pesquisa'))[:30]
-        filename = f"{filename_prefix}_{query_clean}_{timestamp}.xlsx"
+        query_clean = re.sub(r'[^\w\-_]', '_', api_data.get('query', 'pesquisa'))[:30]
+        
+        if filter_by_keywords:
+            filename = f"{filename_prefix}_filtered_{query_clean}_{timestamp}.xlsx"
+        else:
+            filename = f"{filename_prefix}_{query_clean}_{timestamp}.xlsx"
+            
         filepath = os.path.join(self.export_dir, filename)
         
         # Criar workbook
@@ -187,19 +307,19 @@ class ProfessionalExcelExporter:
         formats = self._create_professional_formats(workbook)
         
         # Criar aba principal com todas as publicações
-        self._create_api_publications_sheet(workbook, api_response, formats)
+        self._create_api_publications_sheet(workbook, api_data, formats, filter_by_keywords)
         
         # Criar aba de resumo
-        self._create_api_summary_sheet(workbook, api_response, formats)
+        self._create_api_summary_sheet(workbook, api_data, formats)
         
         workbook.close()
         return filename
     
-    def _create_api_publications_sheet(self, workbook, api_response, formats):
+    def _create_api_publications_sheet(self, workbook, api_response, formats, filter_by_keywords=False):
         """Cria aba principal com publicações da nossa API"""
         worksheet = workbook.add_worksheet('Publicações')
         
-        # Definir cabeçalhos
+        # Definir cabeçalhos (incluindo coluna de keywords se filtrado)
         headers = [
             'Título da Publicação',
             'Autores',
@@ -211,12 +331,19 @@ class ProfessionalExcelExporter:
             'Link'
         ]
         
+        # Adicionar coluna de keywords se filtrado
+        if filter_by_keywords:
+            headers.append('Keywords Encontradas')
+        
         # Escrever cabeçalhos
         for col, header in enumerate(headers):
             worksheet.write(0, col, header, formats['header'])
         
         # Configurar larguras das colunas
-        column_widths = [50, 30, 25, 8, 10, 12, 12, 40]
+        if filter_by_keywords:
+            column_widths = [50, 30, 25, 8, 10, 12, 12, 40, 30]  # Adicionada largura para keywords
+        else:
+            column_widths = [50, 30, 25, 8, 10, 12, 12, 40]
         for i, width in enumerate(column_widths):
             worksheet.set_column(i, i, width)
         
@@ -244,6 +371,11 @@ class ProfessionalExcelExporter:
             else:
                 worksheet.write(row, 7, 'Link não disponível', data_format)
             
+            # Keywords encontradas (se filtrado por keywords)
+            if filter_by_keywords:
+                keywords_text = pub.get('keywords_text', '')
+                worksheet.write(row, 8, keywords_text, data_format)
+            
             row += 1
         
         # Aplicar filtro automático
@@ -260,42 +392,70 @@ class ProfessionalExcelExporter:
         worksheet = workbook.add_worksheet('Resumo')
         
         # Título da planilha
-        worksheet.merge_range(0, 0, 0, 3, 'RELATÓRIO DE PESQUISA ACADÊMICA', formats['header'])
+        worksheet.merge_range(0, 0, 0, 7, 'RELATÓRIO DE PESQUISA ACADÊMICA', formats['header'])
         
         row = 2
         
-        # Informações gerais
-        worksheet.write(row, 0, 'Consulta:', formats['header'])
-        worksheet.write(row, 1, api_response.get('query', ''), formats['data'])
+        # Informações gerais da pesquisa em formato horizontal
+        general_headers = ['Consulta', 'Plataforma', 'Tipo de Busca', 'Total de Resultados', 'Data/Hora', 'Filtrado por Keywords', 'Total Original']
+        
+        # Escrever cabeçalhos
+        for col, header in enumerate(general_headers):
+            worksheet.write(row, col, header, formats['header'])
+        
         row += 1
         
-        worksheet.write(row, 0, 'Plataforma:', formats['header'])
-        worksheet.write(row, 1, api_response.get('platform', ''), formats['data'])
-        row += 1
+        # Escrever dados gerais
+        general_data = [
+            api_response.get('query', ''),
+            api_response.get('platform', ''),
+            api_response.get('search_type', ''),
+            api_response.get('total_results', 0),
+            datetime.now().strftime('%d/%m/%Y %H:%M'),
+            'Sim' if api_response.get('filtered_by_keywords', False) else 'Não',
+            api_response.get('original_total', api_response.get('total_results', 0))
+        ]
         
-        worksheet.write(row, 0, 'Tipo de Busca:', formats['header'])
-        worksheet.write(row, 1, api_response.get('search_type', ''), formats['data'])
-        row += 1
+        for col, data in enumerate(general_data):
+            worksheet.write(row, col, str(data), formats['data'])
         
-        worksheet.write(row, 0, 'Total de Resultados:', formats['header'])
-        worksheet.write(row, 1, api_response.get('total_results', 0), formats['number'])
-        row += 2
+        row += 3
         
-        # Informações do pesquisador (se disponível)
+        # Informações do pesquisador em formato horizontal (se disponível)
         researcher_info = api_response.get('researcher_info', {})
         if researcher_info:
             worksheet.write(row, 0, 'INFORMAÇÕES DO PESQUISADOR:', formats['header'])
             row += 1
             
-            for key, value in researcher_info.items():
-                display_key = key.replace('_', ' ').title()
-                worksheet.write(row, 0, f'{display_key}:', formats['data'])
-                worksheet.write(row, 1, str(value), formats['data'])
-                row += 1
+            # Cabeçalhos do pesquisador
+            researcher_headers = ['Nome', 'Instituição', 'H-Index', 'Total de Citações', 'Áreas de Pesquisa', 'Última Atualização']
+            
+            for col, header in enumerate(researcher_headers):
+                worksheet.write(row, col, header, formats['header'])
+            
+            row += 1
+            
+            # Dados do pesquisador
+            researcher_data = [
+                researcher_info.get('name', 'N/A'),
+                researcher_info.get('institution', 'N/A'),
+                researcher_info.get('h_index', 'N/A'),
+                researcher_info.get('total_citations', 'N/A'),
+                ', '.join(researcher_info.get('research_areas', [])) if isinstance(researcher_info.get('research_areas'), list) else str(researcher_info.get('research_areas', 'N/A')),
+                researcher_info.get('last_update', 'N/A')
+            ]
+            
+            for col, data in enumerate(researcher_data):
+                worksheet.write(row, col, str(data), formats['data'])
         
         # Configurar larguras das colunas
-        worksheet.set_column(0, 0, 20)
-        worksheet.set_column(1, 1, 30)
+        for col in range(8):
+            worksheet.set_column(col, col, 15)
+        
+        # Ajustar algumas colunas específicas
+        worksheet.set_column(0, 0, 25)  # Consulta/Nome
+        worksheet.set_column(1, 1, 30)  # Plataforma/Instituição
+        worksheet.set_column(4, 4, 18)  # Data/Áreas de Pesquisa
         
         return worksheet
     
@@ -487,27 +647,40 @@ class ProfessionalExcelExporter:
         worksheet = workbook.add_worksheet('Resumo da Pesquisa')
         
         # Título
-        worksheet.merge_range(0, 0, 0, 3, 'RELATÓRIO DE PESQUISA ACADÊMICA', formats['header'])
+        worksheet.merge_range(0, 0, 0, 5, 'RELATÓRIO DE PESQUISA ACADÊMICA', formats['header'])
         
-        # Informações da pesquisa
+        # Informações da pesquisa em formato horizontal
         row = 2
-        info_data = [
-            ['Consulta realizada:', search_data.get('query', 'N/A')],
-            ['Tipo de busca:', search_data.get('search_type', 'N/A')],
-            ['Data/Hora:', datetime.now().strftime('%d/%m/%Y %H:%M:%S')],
-            ['Plataformas consultadas:', ', '.join(search_data.get('platforms', []))],
-            ['Total de publicações encontradas:', len(self._extract_all_publications(search_data))],
-            ['Tempo de execução:', f"{search_data.get('execution_time', 0):.2f} segundos"]
+        
+        # Cabeçalhos
+        headers = ['Consulta', 'Tipo de Busca', 'Data/Hora', 'Plataformas', 'Total Publicações', 'Tempo Execução (s)']
+        
+        for col, header in enumerate(headers):
+            worksheet.write(row, col, header, formats['header'])
+        
+        row += 1
+        
+        # Dados
+        data = [
+            search_data.get('query', 'N/A'),
+            search_data.get('search_type', 'N/A'),
+            datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+            ', '.join(search_data.get('platforms', [])),
+            len(self._extract_all_publications(search_data)),
+            f"{search_data.get('execution_time', 0):.2f}"
         ]
         
-        for label, value in info_data:
-            worksheet.write(row, 0, label, formats['header'])
-            worksheet.write(row, 1, str(value), formats['data'])
-            row += 1
+        for col, value in enumerate(data):
+            worksheet.write(row, col, str(value), formats['data'])
         
-        # Configurar larguras
-        worksheet.set_column(0, 0, 25)
-        worksheet.set_column(1, 1, 40)
+        # Configurar larguras das colunas
+        for col in range(6):
+            worksheet.set_column(col, col, 15)
+        
+        # Ajustar colunas específicas
+        worksheet.set_column(0, 0, 25)  # Consulta
+        worksheet.set_column(2, 2, 18)  # Data/Hora
+        worksheet.set_column(3, 3, 20)  # Plataformas
         
         return worksheet
 

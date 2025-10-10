@@ -177,7 +177,8 @@ export const academicService = {
     profileUrl: string,
     platform?: string,
     exportExcel = false,
-    maxPublications = 20
+    maxPublications = 20,
+    filterKeywords = true
   ): Promise<SearchResponse> {
     // Extrair o query do profileUrl (nome do autor)
     let query = "Autor";
@@ -212,6 +213,7 @@ export const academicService = {
     const data: any = {
       query: query,
       export_excel: exportExcel,
+      filter_keywords: filterKeywords,
       platforms: detectedPlatform || "scholar",
       profile_url: profileUrl, // Enviar a URL original também
       max_publications: maxPublications, // Número de publicações a extrair

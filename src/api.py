@@ -3,6 +3,7 @@
 Extração real de dados do Lattes, ORCID e Google Scholar
 """
 
+import os
 import re
 import json
 import time
@@ -17,6 +18,16 @@ from bs4 import BeautifulSoup
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+
+# Importar MongoDB
+try:
+    from .database.mongodb import research_db, ResearchDatabase
+    from .database.excel_consolidado import consolidated_exporter
+    MONGODB_AVAILABLE = True
+    print("✅ MongoDB integrado")
+except ImportError as e:
+    print(f"⚠️ MongoDB não disponível: {e}")
+    MONGODB_AVAILABLE = False
 
 print("🔥 API REAL DE SCRAPING CARREGADA!")
 
@@ -45,6 +56,20 @@ HEADERS = {
     'Cache-Control': 'no-cache',
     'Pragma': 'no-cache'
 }
+
+def save_to_mongodb_if_filtered(result: Dict[str, Any], filter_keywords: bool):
+    """Salvar resultado no MongoDB se filtrado por keywords"""
+    if MONGODB_AVAILABLE and filter_keywords and result.get("data", {}).get("publications"):
+        try:
+            saved = research_db.save_research_result(result)
+            if saved:
+                result["saved_to_database"] = True
+                print("💾 Dados salvos no MongoDB")
+            else:
+                result["database_error"] = "Falha ao salvar no MongoDB"
+        except Exception as e:
+            print(f"❌ Erro ao salvar no MongoDB: {e}")
+            result["database_error"] = str(e)
 
 class LattesExtractor:
     """Extrator real do Lattes"""
@@ -305,9 +330,10 @@ class ScholarExtractor:
         headers['Referer'] = 'https://scholar.google.com/'
         self.session.headers.update(headers)
     
-    def search_author(self, author_name: str) -> Dict[str, Any]:
+    def search_author(self, author_name: str, max_publications: int = 20) -> Dict[str, Any]:
         """Buscar autor no Google Scholar"""
         print(f"🎓 BUSCANDO NO SCHOLAR: {author_name}")
+        print(f"📚 Máximo de publicações para busca: {max_publications}")
         
         try:
             # URL de busca do Scholar
@@ -327,7 +353,7 @@ class ScholarExtractor:
                 profile_link = first_result.select_one('a')
                 if profile_link and 'href' in profile_link.attrs:
                     profile_url = "https://scholar.google.com" + profile_link['href']
-                    return self.extract_profile(profile_url)
+                    return self.extract_profile(profile_url, max_publications)
             
             return {
                 "success": False,
@@ -620,11 +646,22 @@ class ScholarExtractor:
                     
                     # Extrair venue/journal - melhor seletor
                     venue_elem = pub.select_one('.gs_gray')
-                    venue = venue_elem.get_text(strip=True) if venue_elem else "Não especificado"
+                    venue_text = venue_elem.get_text(strip=True) if venue_elem else "Não especificado"
+                    
+                    # Separar autores e revista do campo venue
+                    authors = venue_text  # Por padrão, venue contém autores + revista
+                    journal = venue_text  # Para compatibilidade
+                    
+                    # Tentar separar autores da revista (formato comum: "Autores - Revista, Ano")
+                    if " - " in venue_text:
+                        parts = venue_text.split(" - ", 1)
+                        authors = parts[0].strip()
+                        journal = parts[1].strip() if len(parts) > 1 else venue_text
                     
                     publications.append({
                         "title": title,
-                        "venue": venue,
+                        "venue": journal,  # Revista/periódico
+                        "authors": authors,  # Lista de autores
                         "year": year,
                         "citations": citations,
                         "type": "Artigo",
@@ -655,6 +692,7 @@ async def search_profile(
     profile_url: str = Query(None, description="URL do perfil"),
     platforms: str = Query("all", description="Plataformas"),
     export_excel: bool = Query(False, description="Exportar Excel"),
+    filter_keywords: bool = Query(True, description="Filtrar por palavras-chave relacionadas ao envelhecimento"),
     max_publications: int = Query(20, description="Número máximo de publicações a extrair (padrão: 20)")
 ):
     """Endpoint principal para extração real de dados"""
@@ -708,17 +746,38 @@ async def search_profile(
                     }
                 }
                 
+                
+                # Aplicar filtro por keywords se solicitado
+                if filter_keywords:
+                    from src.export.excel_exporter import ProfessionalExcelExporter
+                    exporter = ProfessionalExcelExporter()
+                    
+                    # Filtrar publicações
+                    original_publications = result["data"]["publications"]
+                    filtered_publications = exporter._filter_publications_by_keywords(original_publications)
+                    
+                    # Atualizar resultado com publicações filtradas
+                    result["data"]["publications"] = filtered_publications
+                    result["total_results"] = len(filtered_publications)
+                    result["filtered_by_keywords"] = True
+                    result["original_total"] = len(original_publications)
+                    
+                    print(f"🔍 Filtro aplicado: {len(original_publications)} -> {len(filtered_publications)} publicações")
+                
                 # Verificar se deve exportar para Excel
                 if export_excel and result["data"]["publications"]:
                     try:
                         from src.export.excel_exporter import ProfessionalExcelExporter
                         exporter = ProfessionalExcelExporter()
-                        filename = exporter.export_api_data(result)
+                        filename = exporter.export_api_data(result, filter_by_keywords=filter_keywords)
                         result["excel_file"] = filename
                         print(f"📊 Excel exportado: {filename}")
                     except Exception as e:
                         print(f"❌ Erro na exportação Excel: {e}")
                         result["export_error"] = str(e)
+                
+                # Salvar no MongoDB se filtrado por keywords
+                save_to_mongodb_if_filtered(result, filter_keywords)
                 
                 return result
             else:
@@ -771,17 +830,38 @@ async def search_profile(
                     }
                 }
                 
+                
+                # Aplicar filtro por keywords se solicitado
+                if filter_keywords:
+                    from src.export.excel_exporter import ProfessionalExcelExporter
+                    exporter = ProfessionalExcelExporter()
+                    
+                    # Filtrar publicações
+                    original_publications = result["data"]["publications"]
+                    filtered_publications = exporter._filter_publications_by_keywords(original_publications)
+                    
+                    # Atualizar resultado com publicações filtradas
+                    result["data"]["publications"] = filtered_publications
+                    result["total_results"] = len(filtered_publications)
+                    result["filtered_by_keywords"] = True
+                    result["original_total"] = len(original_publications)
+                    
+                    print(f"🔍 Filtro aplicado: {len(original_publications)} -> {len(filtered_publications)} publicações")
+                
                 # Verificar se deve exportar para Excel
                 if export_excel and result["data"]["publications"]:
                     try:
                         from src.export.excel_exporter import ProfessionalExcelExporter
                         exporter = ProfessionalExcelExporter()
-                        filename = exporter.export_api_data(result)
+                        filename = exporter.export_api_data(result, filter_by_keywords=filter_keywords)
                         result["excel_file"] = filename
                         print(f"📊 Excel exportado: {filename}")
                     except Exception as e:
                         print(f"❌ Erro na exportação Excel: {e}")
                         result["export_error"] = str(e)
+                
+                # Salvar no MongoDB se filtrado por keywords
+                save_to_mongodb_if_filtered(result, filter_keywords)
                 
                 return result
             else:
@@ -816,8 +896,8 @@ async def search_profile(
                         "publications": [
                             {
                                 "title": pub["title"],
-                                "authors": data["name"],
-                                "publication": pub["venue"],
+                                "authors": pub.get("authors", data["name"]),  # Usar campo authors separado
+                                "publication": pub.get("venue", "N/A"),  # Usar venue para revista
                                 "year": pub["year"],
                                 "cited_by": pub["citations"],
                                 "link": url_to_process,
@@ -835,17 +915,38 @@ async def search_profile(
                     }
                 }
                 
+                
+                # Aplicar filtro por keywords se solicitado
+                if filter_keywords:
+                    from src.export.excel_exporter import ProfessionalExcelExporter
+                    exporter = ProfessionalExcelExporter()
+                    
+                    # Filtrar publicações
+                    original_publications = result["data"]["publications"]
+                    filtered_publications = exporter._filter_publications_by_keywords(original_publications)
+                    
+                    # Atualizar resultado com publicações filtradas
+                    result["data"]["publications"] = filtered_publications
+                    result["total_results"] = len(filtered_publications)
+                    result["filtered_by_keywords"] = True
+                    result["original_total"] = len(original_publications)
+                    
+                    print(f"🔍 Filtro aplicado: {len(original_publications)} -> {len(filtered_publications)} publicações")
+                
                 # Verificar se deve exportar para Excel
                 if export_excel and result["data"]["publications"]:
                     try:
                         from src.export.excel_exporter import ProfessionalExcelExporter
                         exporter = ProfessionalExcelExporter()
-                        filename = exporter.export_api_data(result)
+                        filename = exporter.export_api_data(result, filter_by_keywords=filter_keywords)
                         result["excel_file"] = filename
                         print(f"📊 Excel exportado: {filename}")
                     except Exception as e:
                         print(f"❌ Erro na exportação Excel: {e}")
                         result["export_error"] = str(e)
+                
+                # Salvar no MongoDB se filtrado por keywords
+                save_to_mongodb_if_filtered(result, filter_keywords)
                 
                 return result
             else:
@@ -859,8 +960,9 @@ async def search_profile(
         else:
             # Assumir que é um nome para buscar no Scholar
             print("🎓 DETECTADO: BUSCA POR NOME NO SCHOLAR")
+            print(f"📚 Solicitadas {max_publications} publicações")
             extractor = ScholarExtractor()
-            data = extractor.search_author(url_to_process)
+            data = extractor.search_author(url_to_process, max_publications)
             
             if data.get("success"):
                 result = {
@@ -881,8 +983,8 @@ async def search_profile(
                         "publications": [
                             {
                                 "title": pub["title"],
-                                "authors": data["name"],
-                                "publication": "Google Scholar",
+                                "authors": pub.get("authors", data["name"]),  # Usar campo authors separado
+                                "publication": pub.get("venue", "Google Scholar"),  # Usar venue para revista
                                 "year": pub["year"],
                                 "cited_by": pub["citations"],
                                 "link": None,
@@ -900,17 +1002,38 @@ async def search_profile(
                     }
                 }
                 
+                
+                # Aplicar filtro por keywords se solicitado
+                if filter_keywords:
+                    from src.export.excel_exporter import ProfessionalExcelExporter
+                    exporter = ProfessionalExcelExporter()
+                    
+                    # Filtrar publicações
+                    original_publications = result["data"]["publications"]
+                    filtered_publications = exporter._filter_publications_by_keywords(original_publications)
+                    
+                    # Atualizar resultado com publicações filtradas
+                    result["data"]["publications"] = filtered_publications
+                    result["total_results"] = len(filtered_publications)
+                    result["filtered_by_keywords"] = True
+                    result["original_total"] = len(original_publications)
+                    
+                    print(f"🔍 Filtro aplicado: {len(original_publications)} -> {len(filtered_publications)} publicações")
+                
                 # Verificar se deve exportar para Excel
                 if export_excel and result["data"]["publications"]:
                     try:
                         from src.export.excel_exporter import ProfessionalExcelExporter
                         exporter = ProfessionalExcelExporter()
-                        filename = exporter.export_api_data(result)
+                        filename = exporter.export_api_data(result, filter_by_keywords=filter_keywords)
                         result["excel_file"] = filename
                         print(f"📊 Excel exportado: {filename}")
                     except Exception as e:
                         print(f"❌ Erro na exportação Excel: {e}")
                         result["export_error"] = str(e)
+                
+                # Salvar no MongoDB se filtrado por keywords
+                save_to_mongodb_if_filtered(result, filter_keywords)
                 
                 return result
             else:
@@ -1156,6 +1279,108 @@ async def get_author_publications(
         
     except Exception as e:
         print(f"❌ Erro na busca de publicações: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+# ========== ENDPOINTS DE MONGODB E EXPORTAÇÃO CONSOLIDADA ==========
+
+@app.get("/mongodb/stats")
+async def get_mongodb_stats():
+    """Estatísticas dos dados armazenados no MongoDB"""
+    if not MONGODB_AVAILABLE:
+        raise HTTPException(status_code=503, detail="MongoDB não disponível")
+    
+    try:
+        db = ResearchDatabase()
+        stats = await db.get_research_statistics_async()
+        return {
+            "success": True,
+            "stats": stats
+        }
+    except Exception as e:
+        print(f"❌ Erro ao obter estatísticas: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+@app.get("/mongodb/research")
+async def get_all_research():
+    """Obter todos os dados de pesquisa filtrados do MongoDB"""
+    if not MONGODB_AVAILABLE:
+        raise HTTPException(status_code=503, detail="MongoDB não disponível")
+    
+    try:
+        db = ResearchDatabase()
+        research_data = await db.get_all_keyword_filtered_research_async()
+        return {
+            "success": True,
+            "total_records": len(research_data),
+            "data": research_data
+        }
+    except Exception as e:
+        print(f"❌ Erro ao obter dados de pesquisa: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+@app.get("/export/consolidated")
+async def export_consolidated_excel():
+    """Exportar Excel consolidado com todos os dados do MongoDB"""
+    if not MONGODB_AVAILABLE:
+        raise HTTPException(status_code=503, detail="MongoDB não disponível")
+    
+    try:
+        from src.database.excel_consolidado import ConsolidatedExcelExporter
+        from fastapi.responses import FileResponse
+        
+        # Obter dados do MongoDB
+        db = ResearchDatabase()
+        research_data = await db.get_all_keyword_filtered_research_async()
+        
+        if not research_data:
+            return {
+                "success": False,
+                "message": "Nenhum dado encontrado no banco. Faça buscas com filtro de keywords primeiro.",
+                "total_records": 0,
+                "instructions": "Para gerar dados: faça buscas com 'filter_keywords=True'"
+            }
+        
+        # Exportar Excel consolidado
+        exporter = ConsolidatedExcelExporter()
+        filename = exporter.export_consolidated_excel(research_data)
+        
+        # Caminho completo do arquivo
+        filepath = os.path.join(exporter.exports_dir, filename)
+        
+        # Verificar se o arquivo foi criado
+        if not os.path.exists(filepath):
+            raise HTTPException(status_code=500, detail="Arquivo Excel não foi criado")
+        
+        # Retornar arquivo para download
+        return FileResponse(
+            path=filepath,
+            filename=filename,
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            }
+        )
+        
+    except Exception as e:
+        print(f"❌ Erro na exportação consolidada: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+@app.delete("/mongodb/clear")
+async def clear_mongodb():
+    """Limpar todos os dados do MongoDB (uso com cuidado!)"""
+    if not MONGODB_AVAILABLE:
+        raise HTTPException(status_code=503, detail="MongoDB não disponível")
+    
+    try:
+        db = ResearchDatabase()
+        # Implementar método clear se necessário
+        return {
+            "success": True,
+            "message": "Funcionalidade de limpeza não implementada por segurança"
+        }
+    except Exception as e:
+        print(f"❌ Erro ao limpar dados: {e}")
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 if __name__ == "__main__":
