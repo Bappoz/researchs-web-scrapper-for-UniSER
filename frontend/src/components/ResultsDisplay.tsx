@@ -75,6 +75,7 @@ interface Profile {
   publications?: Publication[];
   total_publications?: number;
   h_index?: number;
+  i10_index?: number;
   total_citations?: number;
   last_update?: string;
   given_names?: string;
@@ -117,6 +118,7 @@ interface ResearcherInfo {
   institution?: string;
   research_areas?: string[];
   h_index?: string | number;
+  i10_index?: string | number;
   total_citations?: string | number;
   orcid_id?: string;
   last_update?: string;
@@ -607,6 +609,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                   {author.h_index > 0 && (
                     <div className='font-medium text-orange-600'>
                       H-Index: {author.h_index}*
+                      {author.i10_index !== undefined &&
+                        author.i10_index > 0 && (
+                          <span className='ml-2'>
+                            • i10-Index: {author.i10_index}*
+                          </span>
+                        )}
                       <span className='text-xs text-gray-500 ml-1'>
                         (estimado)
                       </span>
@@ -823,6 +831,17 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                       </div>
                     </div>
                   )}
+                  {results.researcher_info.i10_index &&
+                    Number(results.researcher_info.i10_index) > 0 && (
+                      <div className='text-center bg-white rounded-lg p-3 shadow-sm border border-gray-200'>
+                        <div className='text-lg font-bold text-green-600'>
+                          {results.researcher_info.i10_index}
+                        </div>
+                        <div className='text-xs text-gray-600 font-medium'>
+                          i10-Index
+                        </div>
+                      </div>
+                    )}
 
                   {results.researcher_info.total_citations && (
                     <div className='text-center bg-white rounded-lg p-3 shadow-sm border border-gray-200'>
@@ -1069,6 +1088,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                               <div className='flex items-center gap-1'>
                                 <Award className='h-4 w-4' />
                                 <span>Índice H: {item.h_index}</span>
+                                {item.i10_index !== undefined &&
+                                  Number(item.i10_index) > 0 && (
+                                    <span className='ml-2'>
+                                      • i10: {item.i10_index}
+                                    </span>
+                                  )}
                               </div>
                             )}
                             {item.total_citations !== undefined &&
@@ -1194,12 +1219,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                             <div className='space-y-3 text-sm'>
                               {/* Métricas Acadêmicas */}
                               {(item.h_index !== undefined ||
+                                item.i10_index !== undefined ||
                                 item.total_citations !== undefined) && (
                                 <div>
                                   <span className='font-medium text-gray-700'>
                                     Métricas Acadêmicas:
                                   </span>
-                                  <div className='mt-2 grid grid-cols-2 gap-4'>
+                                  <div className='mt-2 grid grid-cols-3 gap-4'>
                                     {item.h_index !== undefined && (
                                       <div className='flex items-center gap-2 p-2 bg-blue-50 rounded-lg'>
                                         <Award className='h-5 w-5 text-blue-600' />
@@ -1213,14 +1239,28 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                                         </div>
                                       </div>
                                     )}
+                                    {item.i10_index !== undefined &&
+                                      Number(item.i10_index) > 0 && (
+                                        <div className='flex items-center gap-2 p-2 bg-green-50 rounded-lg'>
+                                          <Award className='h-5 w-5 text-green-600' />
+                                          <div>
+                                            <div className='font-semibold text-green-800'>
+                                              {item.i10_index}
+                                            </div>
+                                            <div className='text-xs text-green-600'>
+                                              i10-Index
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
                                     {item.total_citations !== undefined && (
-                                      <div className='flex items-center gap-2 p-2 bg-green-50 rounded-lg'>
-                                        <Trophy className='h-5 w-5 text-green-600' />
+                                      <div className='flex items-center gap-2 p-2 bg-orange-50 rounded-lg'>
+                                        <Trophy className='h-5 w-5 text-orange-600' />
                                         <div>
-                                          <div className='font-semibold text-green-800'>
+                                          <div className='font-semibold text-orange-800'>
                                             {item.total_citations}
                                           </div>
-                                          <div className='text-xs text-green-600'>
+                                          <div className='text-xs text-orange-600'>
                                             Citações
                                           </div>
                                         </div>

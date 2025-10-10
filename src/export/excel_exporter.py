@@ -217,6 +217,7 @@ class ProfessionalExcelExporter:
             'Ano',
             'Citações',
             'H-Index do Autor',
+            'i10-Index do Autor',
             'Link da Publicação'
         ]
         
@@ -225,7 +226,7 @@ class ProfessionalExcelExporter:
             worksheet.write(0, col, header, formats['header'])
         
         # Configurar larguras das colunas
-        column_widths = [20, 12, 50, 30, 8, 10, 12, 40]
+        column_widths = [20, 12, 50, 30, 8, 10, 12, 12, 40]
         for i, width in enumerate(column_widths):
             worksheet.set_column(i, i, width)
         
@@ -245,12 +246,13 @@ class ProfessionalExcelExporter:
             worksheet.write(row, 4, pub_data['ano'], formats['year'])
             worksheet.write(row, 5, pub_data['citacoes'], formats['number'])
             worksheet.write(row, 6, pub_data['h_index'], formats['number'])
+            worksheet.write(row, 7, pub_data['i10_index'], formats['number'])
             
             # Link da publicação (se existir)
             if pub_data['link']:
-                worksheet.write_url(row, 7, pub_data['link'], formats['link'], 'Ver Publicação')
+                worksheet.write_url(row, 8, pub_data['link'], formats['link'], 'Ver Publicação')
             else:
-                worksheet.write(row, 7, 'Link não disponível', data_format)
+                worksheet.write(row, 8, 'Link não disponível', data_format)
             
             row += 1
         
@@ -428,7 +430,7 @@ class ProfessionalExcelExporter:
             row += 1
             
             # Cabeçalhos do pesquisador
-            researcher_headers = ['Nome', 'Instituição', 'H-Index', 'Total de Citações', 'Áreas de Pesquisa', 'Última Atualização']
+            researcher_headers = ['Nome', 'Instituição', 'H-Index', 'i10-Index', 'Total de Citações', 'Áreas de Pesquisa', 'Última Atualização']
             
             for col, header in enumerate(researcher_headers):
                 worksheet.write(row, col, header, formats['header'])
@@ -440,6 +442,7 @@ class ProfessionalExcelExporter:
                 researcher_info.get('name', 'N/A'),
                 researcher_info.get('institution', 'N/A'),
                 researcher_info.get('h_index', 'N/A'),
+                researcher_info.get('i10_index', 'N/A'),
                 researcher_info.get('total_citations', 'N/A'),
                 ', '.join(researcher_info.get('research_areas', [])) if isinstance(researcher_info.get('research_areas'), list) else str(researcher_info.get('research_areas', 'N/A')),
                 researcher_info.get('last_update', 'N/A')
@@ -482,11 +485,12 @@ class ProfessionalExcelExporter:
                     author_profile = platform_data['author_profile']
                     author_name = author_profile.get('name', 'Autor não identificado')
                     h_index = author_profile.get('h_index', 0)
+                    i10_index = author_profile.get('i10_index', 0)
                     
                     # Se há publicações associadas ao perfil
                     if 'publications' in platform_data:
                         for pub in platform_data['publications']:
-                            pub_info = self._extract_publication_info(pub, platform_name, platform_data, author_name, h_index)
+                            pub_info = self._extract_publication_info(pub, platform_name, platform_data, author_name, h_index, i10_index)
                             publications.append(pub_info)
                     else:
                         # Criar entrada para o perfil mesmo sem publicações específicas
@@ -498,6 +502,7 @@ class ProfessionalExcelExporter:
                             'ano': '',
                             'citacoes': author_profile.get('cited_by', 0),
                             'h_index': h_index,
+                            'i10_index': i10_index,
                             'link': ''
                         })
                 
@@ -513,6 +518,7 @@ class ProfessionalExcelExporter:
                             'ano': '',
                             'citacoes': profile.get('total_citations', 0),
                             'h_index': profile.get('h_index', 0),
+                            'i10_index': profile.get('i10_index', 0),
                             'link': profile.get('lattes_url', '')
                         })
                 
@@ -535,6 +541,7 @@ class ProfessionalExcelExporter:
                                     'ano': self._extract_year_from_orcid_date(work.get('publication_date')),
                                     'citacoes': work.get('cited_by', 0),
                                     'h_index': profile.get('h_index', 0),
+                                    'i10_index': profile.get('i10_index', 0),
                                     'link': work.get('url', f"https://orcid.org/{profile.get('orcid_id', '')}")
                                 })
                         else:
@@ -547,6 +554,7 @@ class ProfessionalExcelExporter:
                                 'ano': '',
                                 'citacoes': profile.get('total_citations', 0),
                                 'h_index': profile.get('h_index', 0),
+                                'i10_index': profile.get('i10_index', 0),
                                 'link': f"https://orcid.org/{profile.get('orcid_id', '')}"
                             })
                 
@@ -570,6 +578,7 @@ class ProfessionalExcelExporter:
                                     'ano': self._extract_year_from_orcid_date(work.get('publication_date')),
                                     'citacoes': work.get('cited_by', 0),
                                     'h_index': profile.get('h_index', 0),
+                                    'i10_index': profile.get('i10_index', 0),
                                     'link': work.get('url', f"https://orcid.org/{profile.get('orcid_id', '')}")
                                 })
                         else:
@@ -582,26 +591,30 @@ class ProfessionalExcelExporter:
                                 'ano': '',
                                 'citacoes': profile.get('total_citations', 0),
                                 'h_index': profile.get('h_index', 0),
+                                'i10_index': profile.get('i10_index', 0),
                                 'link': f"https://orcid.org/{profile.get('orcid_id', '')}"
                             })
         
         return publications
     
-    def _extract_publication_info(self, pub, platform_name, platform_data, author_name=None, h_index=None):
+    def _extract_publication_info(self, pub, platform_name, platform_data, author_name=None, h_index=None, i10_index=None):
         """Extrai informações de uma publicação específica"""
         # Determinar autor principal
         if author_name:
             main_author = author_name
             author_h_index = h_index or 0
+            author_i10_index = i10_index or 0
         else:
             # Extrair primeiro autor da lista de autores
             all_authors = pub.get('authors', '')
             main_author = all_authors.split(',')[0].strip() if all_authors else 'Autor não identificado'
             
-            # Tentar obter H-Index do perfil do autor se disponível
+            # Tentar obter H-Index e i10-Index do perfil do autor se disponível
             author_h_index = 0
+            author_i10_index = 0
             if platform_data.get('author_profile'):
                 author_h_index = platform_data['author_profile'].get('h_index', 0)
+                author_i10_index = platform_data['author_profile'].get('i10_index', 0)
         
         return {
             'autor_principal': main_author,
@@ -611,6 +624,7 @@ class ProfessionalExcelExporter:
             'ano': pub.get('year', ''),
             'citacoes': pub.get('cited_by', 0),
             'h_index': author_h_index,
+            'i10_index': author_i10_index,
             'link': pub.get('link', '')
         }
     
@@ -667,7 +681,7 @@ class ProfessionalExcelExporter:
             datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
             ', '.join(search_data.get('platforms', [])),
             len(self._extract_all_publications(search_data)),
-            f"{search_data.get('execution_time', 0):.2f}"
+            str(search_data.get('execution_time', '0'))
         ]
         
         for col, value in enumerate(data):

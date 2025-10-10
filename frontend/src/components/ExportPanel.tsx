@@ -141,7 +141,13 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
 
   const getResultStatistics = () => {
     if (!results)
-      return { authors: 0, publications: 0, totalCitations: 0, maxHIndex: 0 };
+      return {
+        authors: 0,
+        publications: 0,
+        totalCitations: 0,
+        maxHIndex: 0,
+        maxI10Index: 0,
+      };
 
     if (
       searchType === "comprehensive" &&
@@ -152,6 +158,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       let publications = 0;
       let totalCitations = 0;
       let maxHIndex = 0;
+      let maxI10Index = 0;
 
       // Contar dados do Scholar
       if (results.scholar?.publications) {
@@ -167,6 +174,10 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
           maxHIndex,
           results.scholar.author_profile.h_index || 0
         );
+        maxI10Index = Math.max(
+          maxI10Index,
+          results.scholar.author_profile.i10_index || 0
+        );
       }
 
       // Contar dados do Lattes
@@ -174,6 +185,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
         authors += results.lattes.lattes_profiles.length;
         results.lattes.lattes_profiles.forEach((profile: any) => {
           maxHIndex = Math.max(maxHIndex, profile.h_index || 0);
+          maxI10Index = Math.max(maxI10Index, profile.i10_index || 0);
         });
       }
 
@@ -182,10 +194,11 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
         authors += results.orcid.orcid_profiles.length;
         results.orcid.orcid_profiles.forEach((profile: any) => {
           maxHIndex = Math.max(maxHIndex, profile.h_index || 0);
+          maxI10Index = Math.max(maxI10Index, profile.i10_index || 0);
         });
       }
 
-      return { authors, publications, totalCitations, maxHIndex };
+      return { authors, publications, totalCitations, maxHIndex, maxI10Index };
     }
 
     // Para buscas específicas de plataforma
@@ -195,10 +208,17 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
         publications: 0,
         totalCitations: 0,
         maxHIndex: Math.max(...results.map((r) => r.h_index || 0), 0),
+        maxI10Index: Math.max(...results.map((r) => r.i10_index || 0), 0),
       };
     }
 
-    return { authors: 0, publications: 0, totalCitations: 0, maxHIndex: 0 };
+    return {
+      authors: 0,
+      publications: 0,
+      totalCitations: 0,
+      maxHIndex: 0,
+      maxI10Index: 0,
+    };
   };
 
   const stats = getResultStatistics();
@@ -230,7 +250,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
               Dados Disponíveis para Exportação
             </h4>
 
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-4'>
+            <div className='grid grid-cols-2 md:grid-cols-5 gap-4 mb-4'>
               <div className='text-center'>
                 <Users className='h-8 w-8 text-blue-600 mx-auto mb-2' />
                 <p className='text-2xl font-bold text-blue-900'>
@@ -258,6 +278,13 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
                   {stats.maxHIndex}
                 </p>
                 <p className='text-sm text-orange-700'>Maior H-Index</p>
+              </div>
+              <div className='text-center'>
+                <BarChart3 className='h-8 w-8 text-green-600 mx-auto mb-2' />
+                <p className='text-2xl font-bold text-green-900'>
+                  {stats.maxI10Index}
+                </p>
+                <p className='text-sm text-green-700'>Maior i10-Index</p>
               </div>
             </div>
 
@@ -304,7 +331,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
                 </li>
                 <li>
                   ✅ <strong>Aba Pesquisadores:</strong> Dados completos dos
-                  autores com H-Index
+                  autores com H-Index e i10-Index
                 </li>
                 <li>
                   ✅ <strong>Aba Publicações:</strong> Lista detalhada de

@@ -82,6 +82,7 @@ class ConsolidatedExcelExporter:
                     "Nome": researcher_info.get("name", "N/A"),
                     "Instituição": researcher_info.get("institution", "N/A"),
                     "H-Index": researcher_info.get("h_index", "N/A"),
+                    "i10-Index": researcher_info.get("i10_index", "N/A"),
                     "Total de Citações": researcher_info.get("total_citations", "N/A"),
                     "Plataforma": research.get("platform", "N/A"),
                     "Total de Publicações": research.get("total_publications", 0),
@@ -259,11 +260,12 @@ class ConsolidatedExcelExporter:
             'A': 25,  # Nome
             'B': 35,  # Instituição
             'C': 10,  # H-Index
-            'D': 15,  # Citações
-            'E': 12,  # Plataforma
-            'F': 12,  # Total Pubs
-            'G': 12,  # Data
-            'H': 12   # Tempo
+            'D': 10,  # i10-Index
+            'E': 15,  # Citações
+            'F': 12,  # Plataforma
+            'G': 12,  # Total Pubs
+            'H': 12,  # Data
+            'I': 12   # Tempo
         }
         
         for col, width in column_widths.items():

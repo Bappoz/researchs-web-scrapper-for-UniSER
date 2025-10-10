@@ -70,6 +70,7 @@ export interface LattesProfile {
   total_publications: number;
   total_projects: number;
   h_index?: number;
+  i10_index?: number;
   total_citations?: number;
   orcid_id?: string;
   publications: Publication[];
@@ -90,6 +91,7 @@ export interface ORCIDProfile {
   biography?: string;
   total_works?: number;
   h_index?: number;
+  i10_index?: number;
   total_citations?: number;
   employments: Array<{
     organization: string;
@@ -133,6 +135,7 @@ export interface SearchResponse {
     name: string;
     institution?: string;
     h_index?: number;
+    i10_index?: number;
     total_citations?: number;
   };
 }

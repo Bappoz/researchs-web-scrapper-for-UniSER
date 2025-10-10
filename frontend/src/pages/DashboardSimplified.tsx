@@ -315,6 +315,7 @@ const Dashboard: React.FC = () => {
               name: author.name,
               institution: author.institution,
               h_index: author.h_index,
+              i10_index: author.i10_index,
               total_citations: author.total_citations,
             },
           };

@@ -330,6 +330,9 @@ const ResearchersDashboard: React.FC = () => {
                       {selectedAuthor.h_index > 0 && (
                         <span>H-Index: {selectedAuthor.h_index}</span>
                       )}
+                      {selectedAuthor.i10_index > 0 && (
+                        <span>• i10: {selectedAuthor.i10_index}</span>
+                      )}
                     </div>
                   </div>
                 </div>

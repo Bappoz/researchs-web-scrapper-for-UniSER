@@ -344,7 +344,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
             <ul className='text-xs text-gray-600 space-y-1'>
               <li>✅ Dados organizados em múltiplas abas</li>
               <li>✅ Formatação profissional com cores</li>
-              <li>✅ Métricas acadêmicas (H-Index, citações)</li>
+              <li>✅ Métricas acadêmicas (H-Index, i10-Index, citações)</li>
               <li>✅ Compatível com Excel 2007+</li>
             </ul>
           </div>

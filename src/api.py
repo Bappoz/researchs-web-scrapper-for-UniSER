@@ -383,6 +383,7 @@ class ScholarExtractor:
             name = self._extract_name(soup)
             affiliation = self._extract_affiliation(soup)
             h_index = self._extract_h_index(soup)
+            i10_index = self._extract_i10_index(soup)
             citations = self._extract_citations(soup)
             publications = self._extract_publications_with_pagination(scholar_url, max_publications)
             
@@ -391,6 +392,7 @@ class ScholarExtractor:
                 "name": name,
                 "affiliation": affiliation,
                 "h_index": h_index,
+                "i10_index": i10_index,
                 "total_citations": citations,
                 "publications": publications,
                 "total_publications": len(publications)
@@ -526,6 +528,76 @@ class ScholarExtractor:
             return citations_value
         
         print("❌ Citações não encontradas")
+        return "0"
+    
+    def _extract_i10_index(self, soup: BeautifulSoup) -> str:
+        """Extrair i10-index com debug detalhado"""
+        print("🔍 BUSCANDO I10-INDEX...")
+        
+        # Estratégia 1: Buscar especificamente por i10-index na estrutura da tabela
+        table_rows = soup.select('.gsc_rsb_st')
+        print(f"🔍 Linhas da tabela encontradas: {len(table_rows)}")
+        
+        for i, row in enumerate(table_rows):
+            cells = row.select('td')
+            if len(cells) >= 2:
+                label = cells[0].get_text(strip=True).lower()
+                value = cells[1].get_text(strip=True)
+                print(f"📋 Linha {i}: {label} = {value}")
+                
+                # Procurar especificamente por i10-index
+                if 'i10' in label and value.replace(',', '').isdigit():
+                    i10_value = int(value.replace(',', ''))
+                    if 0 <= i10_value <= 1000:  # Validação de range razoável
+                        print(f"🎯 i10-index encontrado na tabela: {value}")
+                        return value
+        
+        # Estratégia 2: Usar posição conhecida na estrutura típica do Scholar
+        stats_elements = soup.select('.gsc_rsb_std')
+        print(f"🔍 Elementos de estatísticas: {[elem.get_text(strip=True) for elem in stats_elements[:6]]}")
+        
+        if len(stats_elements) >= 6:
+            # No Google Scholar, a estrutura típica é:
+            # [0] Citações total, [1] Citações desde 2019, [2] H-index total, [3] H-index desde 2019, [4] i10-index total, [5] i10-index desde 2019
+            try:
+                i10_total = int(stats_elements[4].get_text(strip=True).replace(',', ''))
+                i10_2019 = int(stats_elements[5].get_text(strip=True).replace(',', '')) if len(stats_elements) > 5 else 0
+                
+                print(f"📊 Análise i10-index:")
+                print(f"  i10-index total (pos 4): {i10_total}")
+                print(f"  i10-index 2019 (pos 5): {i10_2019}")
+                
+                # Validar i10-index total
+                if 0 <= i10_total <= 1000:
+                    print(f"✅ i10-index total validado: {i10_total}")
+                    return str(i10_total)
+                
+                # Se i10_total não for válido, tentar i10_2019
+                elif 0 <= i10_2019 <= 1000:
+                    print(f"✅ i10-index 2019 validado: {i10_2019}")
+                    return str(i10_2019)
+                    
+            except (ValueError, IndexError) as e:
+                print(f"❌ Erro ao analisar i10-index: {e}")
+        
+        # Estratégia 3: Busca textual por "i10"
+        print("🔄 Tentando busca alternativa por i10-index...")
+        
+        # Procurar por elementos que contenham explicitamente "i10"
+        for element in soup.find_all(string=lambda text: text and 'i10' in text.lower()):
+            parent = element.parent if element.parent else None
+            if parent:
+                # Procurar valor numérico próximo
+                next_elem = parent.find_next('.gsc_rsb_std')
+                if next_elem:
+                    value_text = next_elem.get_text(strip=True)
+                    if value_text.replace(',', '').isdigit():
+                        i10_value = int(value_text.replace(',', ''))
+                        if 0 <= i10_value <= 1000:
+                            print(f"🎯 i10-index encontrado por busca textual: {value_text}")
+                            return value_text
+        
+        print("❌ i10-index não encontrado")
         return "0"
     
     def _extract_publications_with_pagination(self, scholar_url: str, max_publications: int = 20) -> List[Dict[str, Any]]:
@@ -890,6 +962,7 @@ async def search_profile(
                         "name": data["name"],
                         "institution": data["affiliation"],
                         "h_index": data["h_index"],
+                        "i10_index": data.get("i10_index", "0"),
                         "total_citations": data["total_citations"]
                     },
                     "data": {
@@ -977,6 +1050,7 @@ async def search_profile(
                         "name": data["name"],
                         "institution": data["affiliation"],
                         "h_index": data["h_index"],
+                        "i10_index": data.get("i10_index", "0"),
                         "total_citations": data["total_citations"]
                     },
                     "data": {
