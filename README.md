@@ -2,114 +2,665 @@
 
 <div align="center">
 
-**Um programa simples para encontrar informações de pesquisadores e seus trabalhos científicos**
+**Sistema completo para encontrar informações de pesquisadores e trabalhos científicos**
 
-![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)
+![React](https://img.shields.io/badge/React-18+-61DAFB.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009688.svg)
 ![Status](https://img.shields.io/badge/Status-Funcionando-green.svg)
 
-_Perfeito para estudantes, professores e pesquisadores_
+_Solução completa para pesquisa acadêmica com Google Scholar e SerpAPI_
 
 </div>
 
 ---
 
-## 🤔 O que este programa faz?
+## 🚀 Instalação e Configuração
 
-Este programa te ajuda a **encontrar pesquisadores e suas publicações** de forma rápida e organizada. É como um "Google" especializado em buscar:
+### Pré-requisitos
 
-- 👨‍🎓 **Múltiplos perfis de pesquisadores por nome**
-- 📚 **Lista completa de publicações de cada pesquisador**
-- 🏛️ **Informações sobre universidades e instituições**
-- 📊 **Estatísticas de publicações e citações**
-- 🔢 **Cálculo automático do Índice H dos pesquisadores**
-- 🎯 **Sistema de seleção de pesquisadores para exportação**
+- **Python 3.12+**
+- **Node.js 18+** e **npm**
+- **MongoDB** (local ou remoto)
+- **Google Chrome** (para Selenium)
+- **Conta SerpAPI** (para Google Scholar)
 
-### 🎯 Como funciona?
+### � Instalação Passo a Passo
 
-1. **Digite um nome** (ex: "Silva", "Santos", "Maria")
-2. **Veja múltiplos pesquisadores** com esse nome
-3. **Selecione o pesquisador** que você quer analisar
-4. **Exporte todas as publicações** em Excel profissional
-
-### 📊 Onde ele busca?
-
-- **Google Scholar** - O maior banco de artigos científicos do mundo
-- **Busca inteligente de pesquisadores** - Encontra múltiplos perfis por nome
-- **Dados completos** - Instituição, áreas de pesquisa, índices acadêmicos
-
-### 📊 Exportação Profissional em Excel
-
-Uma das principais funcionalidades é a **exportação automática em Excel** com formatação profissional:
-
-- 📋 **Múltiplas abas organizadas**: Resumo, Pesquisadores, Publicações e Métricas
-- 🎨 **Formatação profissional**: Cores, fontes e layouts elegantes
-- 📈 **Métricas acadêmicas**: Índice H, i10-Index, total de citações
-- 📊 **Gráficos e estatísticas**: Visualização clara dos dados
-- 💼 **Pronto para apresentações**: Formato compatível com Excel 2007+
-
-**Exemplo de estrutura do Excel gerado**:
-
-- **Aba Resumo**: Visão geral com estatísticas principais
-- **Aba Pesquisadores**: Lista completa com dados acadêmicos e H-Index
-- **Aba Publicações**: Artigos com título, autores, ano, citações e links
-- **Aba Métricas**: Análises de impacto e indicadores de produtividade
-
----
-
-## 🚀 Como instalar? (Passo a passo simples)
-
-### ⚠️ Antes de começar, você precisa ter:
-
-1. **Python** instalado no seu computador ([Baixar aqui](https://python.org/downloads/))
-2. **Git** para baixar o código ([Baixar aqui](https://git-scm.com/downloads))
-
-_💡 Se não sabe como instalar, procure no YouTube: "como instalar Python Windows"_
-
-### 📥 Passo 1: Baixar o programa
-
-Abra o **Prompt de Comando** (Windows) ou **Terminal** (Mac/Linux) e digite:
+#### 1️⃣ Clone o Repositório
 
 ```bash
-git clone https://github.com/Bappoz/Web-Scraper-UniSER.git
-cd Web-Scraper-UniSER
+git clone https://github.com/Bappoz/web-scrapper.git
+cd web-scrapper
 ```
 
-### 🔧 Passo 2: Instalar as dependências
+#### 2️⃣ Configuração do Backend (Python)
+
+**Instale as dependências:**
 
 ```bash
+# Crie um ambiente virtual (recomendado)
+python -m venv venv
+
+# Ative o ambiente virtual
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+# Instale as dependências
 pip install -r requirements.txt
 ```
 
-_⏳ Isso pode demorar alguns minutos..._
-
-### 🔑 Passo 3: Configurar a chave da API (IMPORTANTE!)
-
-Para o Google Scholar funcionar, você precisa de uma "chave":
-
-1. **Vá para**: https://serpapi.com/users/sign_up
-2. **Crie uma conta grátis** (pode usar seu email normal)
-3. **Entre no painel**: https://serpapi.com/dashboard
-4. **Copie sua "API Key"** (uma sequência de letras e números)
-
-Agora crie um arquivo chamado `.env` na pasta do programa:
+**Configure as variáveis de ambiente:**
 
 ```bash
 # Copie o arquivo de exemplo
-copy .env.example .env
+cp .env.example .env
+
+# Edite o arquivo .env com suas configurações
 ```
 
-Abra o arquivo `.env` com o Bloco de Notas e cole sua chave onde está escrito `sua_chave_aqui`:
+#### 3️⃣ Configuração da API SerpAPI
+
+**🔑 Obtenha sua chave da SerpAPI:**
+
+1. **Cadastre-se gratuitamente** em: https://serpapi.com/users/sign_up
+2. **Confirme seu email** e faça login
+3. **Acesse seu dashboard**: https://serpapi.com/dashboard
+4. **Copie sua API Key** (encontrada na seção "Your Private API Key")
+
+**📝 Configure no arquivo .env:**
+
+```bash
+# Abra o arquivo .env e encontre a linha:
+SERPAPI_KEY=your_serpapi_key_here
+
+# Substitua por sua chave real:
+SERPAPI_KEY=sua_chave_serpapi_aqui_1234567890abcdef
+
+# Outras configurações importantes da SerpAPI:
+REQUEST_DELAY=2.0        # Intervalo entre requisições (evita rate limit)
+MAX_RETRIES=3           # Tentativas em caso de erro
+TIMEOUT=30              # Timeout das requisições
+```
+
+**💡 Dicas sobre SerpAPI:**
+
+- **Plano gratuito**: 100 buscas/mês (suficiente para testes)
+- **Rate limit**: Respeite o intervalo entre requisições
+- **Precisão**: SerpAPI oferece dados mais estáveis que scraping direto
+- **Custo**: Planos pagos começam em $50/mês para uso intensivo
+
+#### 4️⃣ Configuração do Frontend (React)
+
+```bash
+# Entre na pasta do frontend
+cd frontend
+
+# Instale as dependências
+npm install
+
+# Configure as variáveis de ambiente
+echo "VITE_API_URL=http://localhost:8000" > .env.local
+```
+
+#### 5️⃣ Configuração do MongoDB
+
+**Opção A - MongoDB Local:**
+
+```bash
+# Instale o MongoDB Community Edition
+# Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
+# Linux: https://docs.mongodb.com/manual/administration/install-on-linux/
+# Mac: brew install mongodb-community
+
+# Inicie o serviço
+# Windows: net start MongoDB
+# Linux/Mac: sudo systemctl start mongod
+
+# Configure no .env:
+MONGODB_URI=mongodb://localhost:27017/web-scraper-uniser
+```
+
+**Opção B - MongoDB Atlas (Cloud):**
+
+```bash
+# 1. Crie uma conta gratuita em: https://www.mongodb.com/cloud/atlas
+# 2. Crie um cluster gratuito
+# 3. Configure um usuário de banco de dados
+# 4. Obtenha a string de conexão
+# 5. Configure no .env:
+MONGODB_URI=mongodb+srv://usuario:senha@cluster.mongodb.net/web-scraper-uniser
+```
+
+### 🏃‍♂️ Executando a Aplicação
+
+#### 1️⃣ Inicie o Backend
+
+```bash
+# Na pasta raiz do projeto, com o ambiente virtual ativo
+uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
+
+# Ou usando o script python:
+python -m src.api
+```
+
+#### 2️⃣ Inicie o Frontend
+
+```bash
+# Em outro terminal, na pasta frontend
+cd frontend
+npm run dev
+
+# Ou para build de produção:
+npm run build
+npm run preview
+```
+
+### 📱 Acesso à Aplicação
+
+- **🌐 Interface Web**: http://localhost:5173 (dev) ou http://localhost:4173 (prod)
+- **🔧 API Backend**: http://localhost:8000
+- **📊 Documentação API**: http://localhost:8000/docs
+
+---
+
+## 🐳 Instalação Alternativa com Docker
+
+Se preferir uma instalação simplificada sem configurar dependências manualmente:
+
+### Pré-requisitos Docker
+
+- **Docker** (versão 20.10+)
+- **Docker Compose** (versão 2.0+)
+
+### Instalação Docker
+
+```bash
+# 1. Clone o repositório (se ainda não fez)
+git clone https://github.com/Bappoz/web-scrapper.git
+cd web-scrapper
+
+# 2. Configure a chave SerpAPI no .env
+cp .env.example .env
+# Edite o .env e adicione sua SERPAPI_KEY
+
+# 3. Inicie com Docker
+cd docker
+docker-compose up -d
+
+# Acesse em: http://localhost:3000
+```
+
+**📋 Mais detalhes**: Consulte `/docker/README.md` para documentação completa do Docker.
+
+---
+
+## 🎯 Como Usar (Busca no Google Acadêmico)
+
+### 1. Acesse a Interface
+
+- Abra seu navegador em `http://localhost:3000`
+- Você verá a interface moderna do Web Scraper UniSER
+
+### 2. Realize uma Busca
+
+- **Digite um nome**: Ex: "Maria Silva", "João Santos", "aging research"
+- **Selecione "Google Scholar"** na opção de plataforma
+- **Configure parâmetros**:
+  - Número de publicações: 20 (recomendado)
+  - Busca por autor: Ativada
+- **Clique em "� Buscar"**
+
+### 3. Visualize os Resultados
+
+A interface mostrará:
+
+- **👤 Perfil do Pesquisador**: Nome, instituição, áreas de pesquisa
+- **� Métricas Acadêmicas**: H-index, i10-index, total de citações
+- **📚 Lista de Publicações**: Títulos, autores, anos, citações
+- **🎯 Filtros por Palavras-chave**: Pesquisas relacionadas ao envelhecimento
+
+### 4. Exporte os Dados
+
+- **Clique em "📊 Exportar Excel"**
+- **Escolha o formato**: Individual ou Consolidado
+- **Download automático** do arquivo Excel profissional
+
+---
+
+## 📊 Formatos de Exportação
+
+### 📄 Excel Individual
+
+- **Aba "Publicações"**: Uma linha por publicação
+- **Aba "Pesquisador"**: Dados completos do autor
+- **Colunas incluem**: H-index, i10-index, citações, links
+
+### � Excel Consolidado
+
+- **Aba "Resumo"**: Estatísticas gerais
+- **Aba "Pesquisadores"**: Lista de todos os autores encontrados
+- **Aba "Publicações"**: Todas as publicações consolidadas
+- **Aba "Métricas"**: Análises e indicadores de impacto
+
+---
+
+## 🔧 Comandos de Desenvolvimento
+
+### Gerenciar a Aplicação
+
+```bash
+# Iniciar backend (pasta raiz)
+uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
+
+# Iniciar frontend (pasta frontend)
+cd frontend
+npm run dev
+
+# Verificar status da API
+curl http://localhost:8000/health
+
+# Ver logs do backend
+tail -f logs/app.log
+
+# Verificar MongoDB
+mongosh --eval "db.runCommand('ping')"
+```
+
+# Verificar status dos containers
+
+docker-compose ps
+
+````
+
+### Desenvolvimento e Debug
+
+```bash
+# Modo desenvolvimento com debug
+DEBUG=true uvicorn src.api:app --reload
+
+# Instalar novas dependências Python
+pip install nova-dependencia
+pip freeze > requirements.txt
+
+# Instalar novas dependências React
+cd frontend
+npm install nova-dependencia
+````
+
+### Backup e Limpeza
+
+```bash
+# Backup do MongoDB
+mongodump --db web-scraper-uniser --out backup/
+
+# Limpar cache do Lattes
+rm -rf lattes_cache/*
+
+# Limpar logs
+rm -rf logs/*
+
+# Atualizar dependências
+pip install --upgrade -r requirements.txt
+cd frontend && npm update
+```
+
+---
+
+## 🔍 Estrutura do Sistema
+
+### 🏗️ Arquitetura
 
 ```
-SERPAPI_KEY=sua_chave_aqui
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│    Frontend     │────│     Backend     │────│    MongoDB      │
+│   React + TS    │    │  FastAPI + Py   │    │   Database      │
+│  localhost:5173 │    │ localhost:8000  │    │ localhost:27017 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### 📁 Estrutura de Pastas
+
+```
+web-scrapper/
+├── 🎨 frontend/               # Interface React
+│   ├── src/                   # Código fonte React
+│   ├── public/                # Arquivos estáticos
+│   ├── package.json           # Dependências Node.js
+│   └── vite.config.ts         # Configuração Vite
+├── ⚙️ src/                    # Backend Python (FastAPI)
+│   ├── api.py                 # Servidor FastAPI principal
+│   ├── scraper/               # Módulos de scraping
+│   ├── models/                # Modelos de dados
+│   ├── export/                # Geração de Excel
+│   └── services/              # Serviços e business logic
+├── 🐳 docker/                 # Configurações Docker (opcional)
+│   ├── docker-compose.yml     # Orquestração dos containers
+│   ├── README.md              # Documentação Docker
+│   └── setup scripts         # Scripts de configuração
+├── 📊 exports/                # Arquivos Excel gerados
+├── 💾 lattes_cache/           # Cache dos dados Lattes
+├── � logs/                   # Logs da aplicação
+├── 📋 requirements.txt        # Dependências Python
+├── 🔧 .env.example            # Exemplo de configurações
+└── � README.md               # Esta documentação
+```
+
+---
+
+## ⚙️ Configurações Detalhadas (.env)
+
+### 🔑 Configurações Essenciais
+
+```bash
+# Copie o arquivo de exemplo
+cp .env.example .env
+```
+
+**Principais configurações do arquivo `.env`:**
+
+```bash
+# 1. SerpAPI (OBRIGATÓRIO para Google Scholar)
+SERPAPI_KEY=sua_chave_serpapi_aqui_1234567890abcdef
+
+# 2. MongoDB (local ou remoto)
+MONGODB_URI=mongodb://localhost:27017/web-scraper-uniser
+
+# 3. API Configuration
 API_HOST=0.0.0.0
 API_PORT=8000
 DEBUG=true
+
+# 4. Rate Limiting (importante para SerpAPI)
+REQUEST_DELAY=2.0        # Segundos entre requisições
+MAX_RETRIES=3           # Tentativas em caso de erro
+TIMEOUT=30              # Timeout das requisições
 ```
 
-### 🎉 Passo 4: Rodar o programa
+### 🔧 Configurações Avançadas
 
 ```bash
+# Cache e Performance
+CACHE_ENABLED=true
+CACHE_EXPIRE_HOURS=24
+
+# Logs e Debug
+LOG_LEVEL=INFO
+LOG_FILE=logs/app.log
+
+# Selenium (se necessário)
+HEADLESS_BROWSER=true
+BROWSER_TIMEOUT=30
+
+# Exportação
+EXPORT_DIR=exports/
+TEMP_DIR=temp/
+```
+
+### 🌐 URLs das Plataformas
+
+```bash
+GOOGLE_SCHOLAR_URL=https://scholar.google.com
+LATTES_URL=http://lattes.cnpq.br
+PUBMED_URL=https://pubmed.ncbi.nlm.nih.gov
+```
+
+---
+
+## � Funcionalidades Detalhadas
+
+### 🎯 Busca Inteligente
+
+- **Google Scholar**: Maior base de dados acadêmicos mundial
+- **Busca por nome**: Encontra múltiplos pesquisadores
+- **Perfis completos**: Dados institucionais e acadêmicos
+- **Filtros avançados**: Palavras-chave relacionadas ao envelhecimento
+
+### 📊 Métricas Acadêmicas
+
+- **H-index**: Índice de produtividade e impacto
+- **i10-index**: Publicações com 10+ citações
+- **Total de citações**: Impacto geral do pesquisador
+- **Áreas de pesquisa**: Especialidades identificadas
+
+### 📋 Sistema de Filtros
+
+36 palavras-chave em 3 idiomas (PT/EN/ES):
+
+- **População**: idoso, elderly, anciano
+- **Processo**: envelhecimento, aging, envejecimiento
+- **Áreas**: gerontologia, geriatria, qualidade de vida
+- **Educação**: universidade aberta, lifelong learning
+
+### 💾 Persistência de Dados
+
+- **MongoDB integrado**: Armazenamento local seguro
+- **Cache inteligente**: Evita buscas desnecessárias
+- **Histórico**: Todas as pesquisas são salvas
+- **Backup automático**: Dados protegidos em containers
+
+---
+
+## 🛠️ Solução de Problemas
+
+### ❌ Backend não inicia
+
+```bash
+# Verificar se o ambiente virtual está ativo
+which python  # Deve apontar para venv/bin/python
+
+# Verificar se as dependências estão instaladas
+pip list | grep fastapi
+
+# Verificar se a porta está livre
+netstat -tulpn | grep :8000
+
+# Executar com debug
+DEBUG=true uvicorn src.api:app --reload
+```
+
+### 🔌 Erro de conexão com SerpAPI
+
+```bash
+# Verificar se a chave está configurada
+grep SERPAPI_KEY .env
+
+# Testar a chave diretamente
+curl "https://serpapi.com/search.json?engine=google_scholar&q=coffee&api_key=SUA_CHAVE"
+
+# Verificar rate limit
+# SerpAPI: máximo 1 request/segundo no plano gratuito
+```
+
+### 💾 Problemas com MongoDB
+
+```bash
+# Verificar se MongoDB está rodando
+sudo systemctl status mongod  # Linux
+brew services list | grep mongodb  # Mac
+
+# Conectar diretamente
+mongosh --eval "db.runCommand('ping')"
+
+# Verificar conexão no Python
+python -c "from pymongo import MongoClient; print(MongoClient().admin.command('ping'))"
+```
+
+### 🌐 Frontend não carrega
+
+```bash
+# Verificar se Node.js está instalado
+node --version  # Deve ser 18+
+npm --version
+
+# Reinstalar dependências
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+
+# Verificar se a porta está livre
+netstat -tulpn | grep :5173
+```
+
+### 🐍 Problemas com Python/Selenium
+
+```bash
+# Verificar versão do Python
+python --version  # Deve ser 3.12+
+
+# Instalar Chrome/Chromium
+# Ubuntu: sudo apt install chromium-browser
+# Mac: brew install --cask google-chrome
+
+# Verificar ChromeDriver
+which chromedriver
+chromedriver --version
+```
+
+---
+
+## 📈 Roadmap e Funcionalidades Futuras
+
+### 🔄 Em Desenvolvimento
+
+- [ ] **Integração com Lattes**: Busca na Plataforma Lattes
+- [ ] **ORCID Support**: Integração com ORCID API
+- [ ] **Análises Avançadas**: Grafos de colaboração
+- [ ] **Relatórios Customizados**: Templates personalizáveis
+
+### 🎯 Funcionalidades Planejadas
+
+- [ ] **API Authentication**: Sistema de usuários
+- [ ] **Scheduled Searches**: Buscas agendadas
+- [ ] **Email Notifications**: Alertas de novas publicações
+- [ ] **Advanced Filters**: Filtros por período, tipo de publicação
+- [ ] **Data Visualization**: Dashboards interativos
+
+---
+
+## 🤝 Contribuição
+
+### Para Desenvolvedores
+
+1. **Fork** o repositório
+2. **Clone** localmente
+3. **Configure** ambiente Docker
+4. **Desenvolva** suas features
+5. **Teste** thoroughly
+6. **Submit** pull request
+
+### Reportar Bugs
+
+- Use as **Issues** do GitHub
+- Inclua **logs completos**
+- Descreva **passos para reproduzir**
+- Informe **versão do Docker**
+
+---
+
+## 📄 Licença
+
+Este projeto está sob licença MIT. Veja o arquivo `LICENSE` para detalhes.
+
+---
+
+## 🆘 Suporte
+
+### � Contato
+
+- **Email**: [suporte@uniser.edu.br](mailto:suporte@uniser.edu.br)
+- **GitHub Issues**: [Reportar problema](https://github.com/Bappoz/web-scrapper/issues)
+
+### 📚 Documentação
+
+- **API Docs**: http://localhost:8000/docs (após inicialização)
+- **Swagger UI**: Interface interativa da API
+- **MongoDB Compass**: Ferramenta visual para MongoDB
+
+### � Tecnologias Utilizadas
+
+- [ ] **Performance**: Otimizações de velocidade
+- [ ] **Multilingual**: Interface em múltiplos idiomas
+
+---
+
+## 🤝 Contribuindo
+
+### 📝 Como Contribuir
+
+1. **Fork o projeto**
+2. **Crie uma branch** para sua feature (`git checkout -b feature/AmazingFeature`)
+3. **Commit suas mudanças** (`git commit -m 'Add some AmazingFeature'`)
+4. **Push para a branch** (`git push origin feature/AmazingFeature`)
+5. **Abra um Pull Request**
+
+### 🐛 Reportar Bugs
+
+Encontrou um bug? [Abra uma issue](https://github.com/Bappoz/web-scrapper/issues) com:
+
+- **Descrição** do problema
+- **Passos** para reproduzir
+- **Screenshots** (se aplicável)
+- **Informações do sistema** (OS, Python version, etc.)
+
+### � Sugerir Features
+
+Tem uma ideia? [Abra uma issue](https://github.com/Bappoz/web-scrapper/issues) com a tag `enhancement`.
+
+---
+
+## � Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+## 🎓 Tecnologias Utilizadas
+
+### Backend
+
+- **Python 3.12+** - Linguagem principal
+- **FastAPI** - Framework web moderno
+- **Selenium** - Automação web
+- **BeautifulSoup** - Parser HTML/XML
+- **Pymongo** - Driver MongoDB
+- **Pandas** - Manipulação de dados
+- **OpenPyXL** - Geração de Excel
+
+### Frontend
+
+- **React 18** - Library UI
+- **TypeScript** - Tipagem estática
+- **Vite** - Build tool
+- **Tailwind CSS** - Framework CSS
+- **Axios** - Cliente HTTP
+
+### Database
+
+- **MongoDB** - Banco NoSQL
+
+### APIs
+
+- **SerpAPI** - Google Scholar data
+- **Google Scholar** - Dados acadêmicos
+
+---
+
+<div align="center">
+
+**🎓 Desenvolvido com ❤️ pelo time UniSER**
+
+_Facilitando pesquisa acadêmica através da tecnologia_
+
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github)](https://github.com/Bappoz/web-scrapper)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![SerpAPI](https://img.shields.io/badge/Powered%20by-SerpAPI-orange)](https://serpapi.com)
+
+**📞 Suporte**: [Abrir Issue](https://github.com/Bappoz/web-scrapper/issues) • **📧 Contato**: via GitHub
+
+</div>
 # IMPORTANTE: Execute este comando da pasta RAIZ do projeto (não da pasta src)
 python -m uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
 ```

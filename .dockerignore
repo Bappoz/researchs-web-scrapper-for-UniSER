@@ -1,0 +1,81 @@
+# Arquivos e pastas a ignorar no build Docker
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Docker
+# docker/ # Comentando para permitir acesso ao nginx.conf
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Ambientes virtuais Python
+venv/
+env/
+.env
+.env.*
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.eslintcache
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*.swo
+
+# Dados e cache locais
+exports/
+lattes_cache/
+logs/
+backup/
+*.xlsx
+*.xls
+
+# Documentação
+README.md
+*.md
+docs/
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache
+
+# Arquivos de build
+dist/
+build/
+*.egg-info/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Arquivos temporários
+temp/
+tmp/
+*.tmp
+
+# Makefile
+Makefile

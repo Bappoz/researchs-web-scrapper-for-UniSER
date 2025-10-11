@@ -5,7 +5,21 @@
 
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8000";
+// Configuração da URL base da API - compatível com Docker
+const getApiBaseUrl = () => {
+  // Em desenvolvimento local
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
+    return "http://localhost:8000";
+  }
+  // Em produção com Docker (usa proxy do nginx)
+  return "/api";
+};
+
+const API_BASE_URL = getApiBaseUrl();
+console.log("🔗 API Base URL:", API_BASE_URL);
 
 // Configuração do axios
 const api = axios.create({
