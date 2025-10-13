@@ -109,11 +109,11 @@ echo "VITE_API_URL=http://localhost:8000" > .env.local
 
 **Opção A - MongoDB Local:**
 
-```bash
-# Instale o MongoDB Community Edition
-# Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
-# Linux: https://docs.mongodb.com/manual/administration/install-on-linux/
-# Mac: brew install mongodb-community
+
+## Instale o MongoDB Community Edition
+Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
+Linux: https://docs.mongodb.com/manual/administration/install-on-linux/
+Mac: brew install mongodb-community
 
 # Inicie o serviço
 # Windows: net start MongoDB
@@ -140,8 +140,6 @@ MONGODB_URI=mongodb+srv://usuario:senha@cluster.mongodb.net/web-scraper-uniser
 
 ```bash
 # Na pasta raiz do projeto, com o ambiente virtual ativo
-uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
-
 # Ou usando o script python:
 python -m src.api
 ```
