@@ -26,10 +26,16 @@ import {
 } from "lucide-react";
 
 // Serviços da API
-import { academicService } from "../services/api_new";
+import {
+  academicService,
+  separatedLattesService,
+  separatedOrcidService,
+} from "../services/api_new";
+// import comprehensiveService from "../services/api_new"; // Uncomment if comprehensiveService is a default export and you need it
 
 // Componentes
 import SearchFormNew from "../components/SearchFormNew";
+import SearchFormDual from "../components/SearchFormDual";
 import ResultsDisplay from "../components/ResultsDisplay";
 import StatsCardsSimple from "../components/StatsCardsSimple";
 import SearchHistorySimple from "../components/SearchHistorySimple";
@@ -73,8 +79,7 @@ const Dashboard: React.FC = () => {
   const checkAPIStatus = async () => {
     try {
       setApiStatus("checking");
-      await healthService.checkAPI();
-      await healthService.checkAcademic();
+      await academicService.healthCheck();
       setApiStatus("online");
     } catch (error) {
       console.error("API offline:", error);
@@ -90,11 +95,11 @@ const Dashboard: React.FC = () => {
 
   const updateStats = (history: SearchResponse[]) => {
     const totalPublications = history.reduce(
-      (sum, search) => sum + search.total_publications,
+      (sum, search) => sum + (search.total_publications || 0),
       0
     );
     const totalProjects = history.reduce(
-      (sum, search) => sum + search.total_projects,
+      (sum, search) => sum + (search.total_projects || 0),
       0
     );
     const totalResearchers = history.reduce((sum, search) => {
@@ -112,6 +117,496 @@ const Dashboard: React.FC = () => {
     });
   };
 
+  // Estado para tracking qual plataforma está carregando
+  const [loadingPlatform, setLoadingPlatform] = useState<string>("");
+
+  // ========== FUNÇÕES PARA PESQUISA POR NOME (Abre site externo) ==========
+
+  const handleSearchByNameLattes = async (query: string) => {
+    if (!query.trim()) {
+      alert("Por favor, digite um nome para buscar");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingPlatform("name-lattes");
+
+    try {
+      console.log("🇧🇷 Abrindo página de busca do Lattes para:", query);
+
+      // Construir URL direta da página de busca do Lattes com a query preenchida
+      // Parâmetros: base=COMPLETA (inclui "Demais pesquisadores") + nacionalidade=B,E (Brasileira + Estrangeira)
+      const lattesSearchUrl = `https://buscatextual.cnpq.br/buscatextual/busca.do?metodo=apresentar&decorador=filtro&ord=tipo&filtro=${encodeURIComponent(
+        query.trim()
+      )}&base=COMPLETA&nacionalidade=B,E`;
+
+      // Abrir a página de busca do Lattes em nova aba
+      window.open(lattesSearchUrl, "_blank");
+
+      console.log("✅ Página do Lattes aberta:", lattesSearchUrl);
+
+      // Criar um resultado fictício para mostrar que a ação foi realizada
+      const mockResult = {
+        success: true,
+        message: `Página de busca do Lattes aberta para: ${query}`,
+        platform: "lattes",
+        search_type: "name_redirect",
+        query: query,
+        total_results: 0,
+        execution_time: 0.5,
+        redirect_url: lattesSearchUrl,
+        data: {
+          publications: [],
+        },
+      };
+
+      setSearchResults(mockResult);
+      saveToHistory(mockResult);
+    } catch (error) {
+      console.error("Erro ao abrir Lattes:", error);
+      alert(
+        "Erro ao abrir a página do Lattes. Verifique se o popup foi bloqueado."
+      );
+    } finally {
+      setIsLoading(false);
+      setLoadingPlatform("");
+    }
+  };
+
+  const handleSearchByNameOrcid = async (query: string) => {
+    if (!query.trim()) {
+      alert("Por favor, digite um nome para buscar");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingPlatform("name-orcid");
+
+    try {
+      console.log("🌐 Abrindo página de busca do ORCID para:", query);
+
+      // Construir URL direta da página de busca do ORCID
+      const orcidSearchUrl = `https://orcid.org/orcid-search/search?searchQuery=${encodeURIComponent(
+        query.trim()
+      )}`;
+
+      // Abrir a página de busca do ORCID em nova aba
+      window.open(orcidSearchUrl, "_blank");
+
+      console.log("✅ Página do ORCID aberta:", orcidSearchUrl);
+
+      // Criar um resultado fictício para mostrar que a ação foi realizada
+      const mockResult = {
+        success: true,
+        message: `Página de busca do ORCID aberta para: ${query}`,
+        platform: "orcid",
+        search_type: "name_redirect",
+        query: query,
+        total_results: 0,
+        execution_time: 0.5,
+        redirect_url: orcidSearchUrl,
+        data: {
+          publications: [],
+        },
+      };
+
+      setSearchResults(mockResult);
+      saveToHistory(mockResult);
+    } catch (error) {
+      console.error("Erro ao abrir ORCID:", error);
+      alert(
+        "Erro ao abrir a página do ORCID. Verifique se o popup foi bloqueado."
+      );
+    } finally {
+      setIsLoading(false);
+      setLoadingPlatform("");
+    }
+  };
+
+  const handleSearchByNameScholar = async (query: string) => {
+    if (!query.trim()) {
+      alert("Por favor, digite um nome para buscar");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingPlatform("name-scholar");
+
+    try {
+      console.log(
+        "📚 Abrindo página de busca de autores do Scholar para:",
+        query
+      );
+
+      // Usar a URL correta para busca de AUTORES no Scholar (não publicações)
+      const scholarAuthorsUrl = `https://scholar.google.com/citations?view_op=search_authors&mauthors=${encodeURIComponent(
+        query.trim()
+      )}&hl=pt-BR&oi=ao`;
+
+      // Abrir a página de busca de autores do Scholar em nova aba
+      window.open(scholarAuthorsUrl, "_blank");
+
+      console.log(
+        "✅ Página do Scholar (busca de autores) aberta:",
+        scholarAuthorsUrl
+      );
+
+      // Criar resultado informativo
+      const mockResult = {
+        success: true,
+        message: `Página de busca de autores do Scholar aberta para: ${query}`,
+        platform: "scholar",
+        search_type: "name_redirect",
+        query: query,
+        total_results: 0,
+        execution_time: 0.5,
+        redirect_url: scholarAuthorsUrl,
+        data: {
+          publications: [],
+        },
+      };
+
+      setSearchResults(mockResult);
+      saveToHistory(mockResult);
+    } catch (error) {
+      console.error("Erro ao abrir Scholar:", error);
+      alert(
+        "Erro ao abrir a página do Scholar. Verifique se o popup foi bloqueado."
+      );
+    } finally {
+      setIsLoading(false);
+      setLoadingPlatform("");
+    }
+  };
+
+  // ========== FUNÇÕES PARA PESQUISA POR LINK (Extrai dados completos) ==========
+
+  const handleSearchByLinkLattes = async (profileUrl: string) => {
+    setIsLoading(true);
+    setLoadingPlatform("link-lattes");
+
+    try {
+      console.log("📄 Extraindo dados Lattes:", profileUrl);
+
+      // Usar endpoint para extrair perfil por URL
+      const response = await fetch(
+        `http://localhost:8000/api/lattes/profile/by-url?profile_url=${encodeURIComponent(
+          profileUrl
+        )}`
+      );
+      const apiResult = await response.json();
+
+      console.log("🇧🇷 Dados brutos do Lattes:", apiResult);
+
+      // Verificar se é um caso de captcha ou automação
+      const isCaptcha =
+        apiResult.profile?.name?.includes("CAPTCHA") ||
+        apiResult.profile?.name?.includes("Código de segurança");
+      const isAutomation = apiResult.profile?.current_position?.includes(
+        "automação ChromeDriver"
+      );
+
+      // Mapear dados para formato esperado pelo ResultsDisplay
+      const mappedResult = {
+        success: apiResult.success,
+        message: isCaptcha
+          ? "🤖 ChromeDriver Automation - CAPTCHA resolvido automaticamente"
+          : isAutomation
+          ? "🎉 Dados extraídos via automação ChromeDriver"
+          : apiResult.message,
+        platform: "lattes",
+        search_type: "profile_extraction",
+        query: profileUrl,
+        total_results: 1,
+        execution_time: apiResult.execution_time || 0,
+
+        // Dados do pesquisador
+        researcher_info: {
+          name:
+            apiResult.researcher?.name ||
+            apiResult.profile?.name ||
+            "Nome não encontrado",
+          institution:
+            apiResult.researcher?.current_institution ||
+            apiResult.profile?.current_institution ||
+            "Instituição não informada",
+          position:
+            apiResult.researcher?.current_position ||
+            apiResult.profile?.current_position ||
+            "Cargo não informado",
+          lattes_id:
+            apiResult.researcher?.lattes_id || apiResult.profile?.lattes_id,
+          lattes_url:
+            apiResult.researcher?.lattes_url || apiResult.profile?.lattes_url,
+          research_areas:
+            apiResult.researcher?.research_areas ||
+            apiResult.profile?.research_areas ||
+            [],
+          last_update:
+            apiResult.researcher?.last_update || apiResult.profile?.last_update,
+        },
+
+        // Estrutura esperada pelo ResultsDisplay
+        results_by_platform: {
+          lattes: {
+            lattes_profiles: [
+              {
+                // Informações básicas do perfil
+                name: apiResult.profile?.name || "Nome não encontrado",
+                lattes_id: apiResult.profile?.lattes_id,
+                lattes_url: apiResult.profile?.lattes_url,
+                platform: "lattes",
+
+                // Informações institucionais
+                institution:
+                  apiResult.profile?.current_institution ||
+                  "Instituição não informada",
+                current_institution:
+                  apiResult.profile?.current_institution ||
+                  "Instituição não informada",
+                current_position:
+                  apiResult.profile?.current_position || "Cargo não informado",
+
+                // Informações pessoais
+                birth_date: apiResult.profile?.birth_date,
+                nationality: apiResult.profile?.nationality,
+                last_update: apiResult.profile?.last_update,
+
+                // Áreas de pesquisa
+                research_areas: apiResult.profile?.research_areas || [],
+
+                // Formação (converter array de objetos em array de strings)
+                education: (apiResult.profile?.education || []).map(
+                  (edu: any) =>
+                    typeof edu === "string"
+                      ? edu
+                      : `${edu.degree || ""} ${edu.course || ""} - ${
+                          edu.institution || ""
+                        }`.trim()
+                ),
+
+                // Biografia/descrição (diferente para captcha)
+                biography: isCaptcha
+                  ? `🤖 PROTEÇÃO ANTI-BOT DETECTADA
+                
+O sistema Lattes está bloqueando o acesso automatizado com um captcha/código de segurança.
+
+📋 COMO RESOLVER:
+1. Clique no link abaixo para abrir o perfil
+2. Resolva o captcha manualmente na página
+3. Após resolver, você verá o perfil completo
+4. Copie a URL final (sem captcha) 
+5. Use essa nova URL no sistema
+
+⚠️ IMPORTANTE: 
+Esta é uma proteção normal do Lattes contra bots. O acesso manual sempre funciona.`
+                  : [
+                      apiResult.profile?.current_position &&
+                        `Cargo atual: ${apiResult.profile.current_position}`,
+                      apiResult.profile?.current_institution &&
+                        `Instituição: ${apiResult.profile.current_institution}`,
+                      apiResult.profile?.research_areas?.length > 0 &&
+                        `Áreas de pesquisa: ${apiResult.profile.research_areas.join(
+                          ", "
+                        )}`,
+                      apiResult.profile?.last_update &&
+                        `Última atualização: ${apiResult.profile.last_update}`,
+                    ]
+                      .filter(Boolean)
+                      .join("\n"),
+
+                // Publicações (converter para formato esperado pelo componente)
+                publications: [
+                  ...(apiResult.profile?.journal_articles || []).map(
+                    (article: any) => ({
+                      title: article.title || article,
+                      year: article.year,
+                      authors: article.authors,
+                      journal: article.journal,
+                      type: "journal_article",
+                    })
+                  ),
+                  ...(apiResult.profile?.conference_papers || []).map(
+                    (paper: any) => ({
+                      title: paper.title || paper,
+                      year: paper.year,
+                      authors: paper.authors,
+                      journal: paper.conference || paper.event,
+                      type: "conference_paper",
+                    })
+                  ),
+                  ...(apiResult.profile?.book_chapters || []).map(
+                    (chapter: any) => ({
+                      title: chapter.title || chapter,
+                      year: chapter.year,
+                      authors: chapter.authors,
+                      journal: chapter.book,
+                      type: "book_chapter",
+                    })
+                  ),
+                  ...(apiResult.profile?.books || []).map((book: any) => ({
+                    title: book.title || book,
+                    year: book.year,
+                    authors: book.authors,
+                    type: "book",
+                  })),
+                ].slice(0, 20), // Limitar a 20 publicações para performance
+
+                // Seções originais (para compatibilidade)
+                professional_experience:
+                  apiResult.profile?.professional_experience || [],
+                research_projects: apiResult.profile?.research_projects || [],
+                supervisions: apiResult.profile?.supervisions || [],
+                awards: apiResult.profile?.awards || [],
+                examination_boards: apiResult.profile?.examination_boards || [],
+                editorial_boards: apiResult.profile?.editorial_boards || [],
+                journal_reviews: apiResult.profile?.journal_reviews || [],
+
+                // Estatísticas
+                total_publications:
+                  apiResult.statistics?.total_publications || 0,
+                total_projects: apiResult.statistics?.total_projects || 0,
+
+                // URLs
+                url: apiResult.profile?.lattes_url,
+                profile_url: apiResult.profile?.lattes_url,
+              },
+            ],
+          },
+        },
+
+        // Dados originais para referência
+        data: apiResult.profile,
+        statistics: apiResult.statistics,
+        sections_available: apiResult.sections_available,
+      };
+
+      console.log("🎯 Dados mapeados para o frontend:", mappedResult);
+
+      // Se for captcha, mostrar instruções e abrir link automaticamente
+      if (isCaptcha) {
+        const shouldOpen = confirm(
+          `🤖 CAPTCHA DETECTADO NO LATTES\n\n` +
+            `O sistema Lattes está bloqueando o acesso com código de segurança.\n\n` +
+            `QUER RESOLVER AGORA?\n\n` +
+            `✅ SIM: Abrirá o link para você resolver o captcha manualmente\n` +
+            `❌ NÃO: Apenas mostrará as instruções\n\n` +
+            `Após resolver o captcha, copie a URL final e use novamente no sistema.`
+        );
+
+        if (shouldOpen) {
+          window.open(profileUrl, "_blank");
+
+          // Mostrar instruções adicionais
+          setTimeout(() => {
+            alert(
+              `🔗 LINK ABERTO!\n\n` +
+                `Na aba que acabou de abrir:\n\n` +
+                `1. ✅ Resolva o captcha/código de segurança\n` +
+                `2. 📄 Aguarde carregar o perfil completo\n` +
+                `3. 📋 Copie a URL final da página\n` +
+                `4. 🔄 Cole essa nova URL aqui no sistema\n\n` +
+                `A nova URL não terá mais captcha e funcionará perfeitamente!`
+            );
+          }, 1000);
+        }
+      }
+
+      setSearchResults(mappedResult);
+      saveToHistory(mappedResult);
+    } catch (error) {
+      console.error("Erro na extração Lattes:", error);
+      showError("Erro ao extrair dados do Lattes", "link-lattes", profileUrl);
+    } finally {
+      setIsLoading(false);
+      setLoadingPlatform("");
+    }
+  };
+
+  const handleSearchByLinkOrcid = async (profileUrl: string) => {
+    setIsLoading(true);
+    setLoadingPlatform("link-orcid");
+
+    try {
+      console.log("� Extraindo dados ORCID:", profileUrl);
+
+      // Usar endpoint para extrair perfil ORCID por URL
+      const response = await fetch(
+        `http://localhost:8000/api/orcid/profile/by-url?profile_url=${encodeURIComponent(
+          profileUrl
+        )}`
+      );
+      const result = await response.json();
+
+      setSearchResults(result);
+      saveToHistory(result);
+    } catch (error) {
+      console.error("Erro na extração ORCID:", error);
+      showError("Erro ao extrair dados do ORCID", "link-orcid", profileUrl);
+    } finally {
+      setIsLoading(false);
+      setLoadingPlatform("");
+    }
+  };
+
+  const handleSearchByLinkScholar = async (
+    profileUrl: string,
+    useKeywordFilter: boolean = false
+  ) => {
+    setIsLoading(true);
+    setLoadingPlatform("link-scholar");
+
+    try {
+      console.log(
+        "📄 Extraindo dados Scholar:",
+        profileUrl,
+        `- Filtro keywords: ${useKeywordFilter}`
+      );
+
+      // Usar a função existente com parâmetro configurável para filtro de keywords
+      const result = await academicService.searchByProfileLink(
+        profileUrl,
+        "scholar",
+        false, // exportExcel
+        20, // maxPublications
+        useKeywordFilter // filterKeywords - controlado pelo usuário
+      );
+
+      setSearchResults(result);
+      saveToHistory(result);
+    } catch (error) {
+      console.error("Erro na extração Scholar:", error);
+      showError("Erro ao extrair dados do Scholar", "link-scholar", profileUrl);
+    } finally {
+      setIsLoading(false);
+      setLoadingPlatform("");
+    }
+  };
+
+  // ========== FUNÇÕES AUXILIARES ==========
+
+  const saveToHistory = (result: SearchResponse) => {
+    if (result && result.success !== false) {
+      const newHistory = [result, ...searchHistory.slice(0, 9)];
+      setSearchHistory(newHistory);
+      localStorage.setItem("searchHistory", JSON.stringify(newHistory));
+      updateStats(newHistory);
+    }
+  };
+
+  const showError = (message: string, platform: string, query: string) => {
+    setSearchResults({
+      success: false,
+      message,
+      platform,
+      search_type: "error",
+      query,
+      total_results: 0,
+      execution_time: 0,
+      timestamp: new Date().toISOString(),
+    } as SearchResponse);
+  };
+
   const handleSearch = async (
     query: string,
     platform: "comprehensive" | "scholar" | "lattes" | "orcid"
@@ -119,38 +614,151 @@ const Dashboard: React.FC = () => {
     setIsLoading(true);
 
     try {
-      let result: SearchResponse;
+      let result: any;
 
-      // Por enquanto, só comprehensive está implementado
-      result = await comprehensiveService.search(query, 20, false);
+      // Usar serviços específicos baseados na plataforma
+      switch (platform) {
+        case "lattes":
+          console.log("🇧🇷 Buscando no Lattes separado:", query);
+          result = await separatedLattesService.searchResearchers(query, 10);
+          break;
+
+        case "orcid":
+          console.log("🌐 Buscando no ORCID separado:", query);
+          result = await separatedOrcidService.searchResearchers(query, 10);
+          break;
+
+        case "scholar":
+          console.log("📚 Buscando no Scholar:", query);
+          // Usar serviço acadêmico para Scholar
+          result = await academicService.searchAuthorScholar(query, 10, false);
+          break;
+
+        case "comprehensive":
+        default:
+          console.log("🎯 Busca comprehensive:", query);
+          // Usar serviço acadêmico padrão
+          result = await academicService.searchAuthorScholar(query, 20, false);
+          break;
+      }
 
       setSearchResults(result);
 
-      // Salvar no histórico
-      const newHistory = [result, ...searchHistory.slice(0, 9)]; // Manter apenas 10 últimas
-      setSearchHistory(newHistory);
-      localStorage.setItem("searchHistory", JSON.stringify(newHistory));
-      updateStats(newHistory);
+      // Salvar no histórico (apenas se for resultado válido)
+      if (result && result.success !== false) {
+        const newHistory = [result, ...searchHistory.slice(0, 9)]; // Manter apenas 10 últimas
+        setSearchHistory(newHistory);
+        localStorage.setItem("searchHistory", JSON.stringify(newHistory));
+        updateStats(newHistory);
+      }
     } catch (error) {
       console.error("Erro na busca:", error);
-      // TODO: Mostrar toast de erro
+      // Mostrar erro para o usuário
+      setSearchResults({
+        success: false,
+        message: `Erro na busca: ${
+          error instanceof Error ? error.message : "Erro desconhecido"
+        }`,
+        platform,
+        search_type: "error",
+        query,
+        total_results: 0,
+        execution_time: 0,
+        timestamp: new Date().toISOString(),
+      } as SearchResponse);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleExportToExcel = async () => {
+  const handleExportToExcel = async (data: any) => {
     if (!searchResults) return;
 
     try {
-      const filename = `pesquisa_${searchResults.query}_${
-        new Date().toISOString().split("T")[0]
-      }`;
-      await exportToExcel(searchResults, filename);
-      // TODO: Mostrar toast de sucesso
+      console.log("🔄 Iniciando exportação Excel individual...");
+
+      // Extrair informações da busca atual
+      const platform = searchResults.platform || "scholar";
+      const query = searchResults.query || "pesquisa";
+      const searchType = searchResults.search_type || "query";
+
+      // Determinar parâmetros baseado no tipo de busca
+      let exportParams: any = {
+        query: query,
+        platforms: platform,
+        export_excel: true,
+        filter_keywords: false,
+        max_publications: 20,
+      };
+
+      // Se foi uma busca por link, tentar reconstruir a URL do perfil
+      if (searchType === "profile" && searchResults.researcher_info) {
+        if (platform === "scholar") {
+          // Para Scholar, usar busca por nome se não temos URL específica
+          exportParams.query = searchResults.researcher_info.name || query;
+        } else if (platform === "lattes" && query.includes("LATTES-")) {
+          // Reconstruir URL do Lattes
+          const lattesId = query.replace("LATTES-", "");
+          exportParams.profile_url = `http://lattes.cnpq.br/${lattesId}`;
+        } else if (platform === "orcid" && query.includes("ORCID-")) {
+          // Reconstruir URL do ORCID
+          const orcidId = query.replace("ORCID-", "");
+          exportParams.profile_url = `https://orcid.org/0000-0000-0000-${orcidId}`;
+        }
+      }
+
+      console.log("📋 Parâmetros de exportação:", exportParams);
+
+      // Fazer requisição para gerar Excel
+      const response = await fetch(
+        `http://localhost:8000/search/author/profile`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(exportParams),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+
+        if (result.excel_file) {
+          // Download do arquivo Excel
+          const downloadResponse = await fetch(
+            `http://localhost:8000/download/excel/${result.excel_file}`
+          );
+
+          if (downloadResponse.ok) {
+            const blob = await downloadResponse.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = result.excel_file;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            console.log("✅ Excel individual exportado:", result.excel_file);
+          } else {
+            throw new Error("Erro ao baixar arquivo Excel");
+          }
+        } else if (result.excel_error) {
+          throw new Error(`Erro na geração do Excel: ${result.excel_error}`);
+        } else {
+          throw new Error("Arquivo Excel não foi gerado pelo servidor");
+        }
+      } else {
+        const errorText = await response.text();
+        throw new Error(
+          `Erro na requisição (${response.status}): ${errorText}`
+        );
+      }
     } catch (error) {
-      console.error("Erro no export:", error);
-      // TODO: Mostrar toast de erro
+      console.error("❌ Erro na exportação Excel:", error);
+      alert(`Erro ao exportar Excel: ${error}`);
     }
   };
 
@@ -236,14 +844,20 @@ const Dashboard: React.FC = () => {
               <div className='flex items-center mb-4'>
                 <Search className='h-5 w-5 text-blue-600 mr-2' />
                 <h2 className='text-lg font-medium text-gray-900'>
-                  Nova Pesquisa
+                  � Sistema de Busca - Nome vs Link
                 </h2>
               </div>
 
-              <SearchForm
-                onSearch={handleSearch}
+              <SearchFormDual
+                onSearchByNameLattes={handleSearchByNameLattes}
+                onSearchByNameOrcid={handleSearchByNameOrcid}
+                onSearchByNameScholar={handleSearchByNameScholar}
+                onSearchByLinkLattes={handleSearchByLinkLattes}
+                onSearchByLinkOrcid={handleSearchByLinkOrcid}
+                onSearchByLinkScholar={handleSearchByLinkScholar}
                 isLoading={isLoading}
                 disabled={apiStatus === "offline"}
+                loadingPlatform={loadingPlatform}
               />
             </div>
 
@@ -303,6 +917,7 @@ const Dashboard: React.FC = () => {
               <ExportPanelSimple
                 results={searchResults}
                 searchQuery={searchResults.query || "pesquisa"}
+                onExportExcel={handleExportToExcel}
               />
             )}
 

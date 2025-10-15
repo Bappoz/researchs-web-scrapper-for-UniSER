@@ -182,6 +182,31 @@ class ResearchDatabase:
             print(f"❌ Erro ao buscar dados do MongoDB (async): {e}")
             return []
     
+    async def get_all_scholar_research_async(self) -> List[Dict[str, Any]]:
+        """Buscar todas as pesquisas do Scholar (com ou sem filtro de keywords)"""
+        try:
+            if self.async_collection is None:
+                if not await self.connect_async():
+                    return []
+            
+            # Buscar todas as pesquisas do Scholar
+            cursor = self.async_collection.find(
+                {"platform": "scholar"},
+                sort=[("timestamp", -1)]  # Mais recentes primeiro
+            )
+            
+            results = []
+            async for doc in cursor:
+                results.append(doc)
+            
+            print(f"📚 Encontradas {len(results)} pesquisas do Scholar")
+            
+            return results
+            
+        except Exception as e:
+            print(f"❌ Erro ao buscar dados do Scholar no MongoDB (async): {e}")
+            return []
+    
     def get_research_statistics(self) -> Dict[str, Any]:
         """Obter estatísticas gerais das pesquisas"""
         try:

@@ -79,6 +79,7 @@ export interface LattesProfile {
   name: string;
   lattes_id?: string;
   current_institution?: string;
+  profile_url?: string;
   current_position?: string;
   research_areas: string[];
   total_publications: number;
@@ -387,6 +388,136 @@ export const lattesService = {
 export const orcidService = {
   async search(name: string, maxResults = 10): Promise<SearchResponse> {
     return academicService.searchAuthorOrcid(name, maxResults);
+  },
+};
+
+// ==================== NOVOS SERVIÇOS SEPARADOS (MODULAR) ====================
+
+export const separatedLattesService = {
+  /**
+   * Busca pesquisadores no Lattes usando endpoints separados
+   */
+  async searchResearchers(
+    name: string,
+    maxResults = 10
+  ): Promise<SearchResponse> {
+    try {
+      const response = await api.get("/api/lattes/search/researchers", {
+        params: {
+          name,
+          max_results: maxResults,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("Erro na busca de pesquisadores Lattes:", error);
+      throw new Error(error.response?.data?.detail || "Erro na busca Lattes");
+    }
+  },
+
+  /**
+   * Obtém perfil completo por URL do Lattes
+   */
+  async getProfileByUrl(profileUrl: string) {
+    try {
+      const response = await api.get("/api/lattes/profile/by-url", {
+        params: {
+          profile_url: profileUrl,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("Erro ao obter perfil Lattes:", error);
+      throw new Error(
+        error.response?.data?.detail || "Erro ao obter perfil Lattes"
+      );
+    }
+  },
+
+  /**
+   * Health check do serviço Lattes
+   */
+  async healthCheck() {
+    try {
+      const response = await api.get("/api/lattes/health");
+      return response.data;
+    } catch (error: any) {
+      throw new Error("Serviço Lattes indisponível");
+    }
+  },
+};
+
+export const separatedOrcidService = {
+  /**
+   * Busca pesquisadores no ORCID usando endpoints separados
+   */
+  async searchResearchers(
+    name: string,
+    maxResults = 10
+  ): Promise<SearchResponse> {
+    try {
+      const response = await api.get("/api/orcid/search/researchers", {
+        params: {
+          name,
+          max_results: maxResults,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("Erro na busca de pesquisadores ORCID:", error);
+      throw new Error(error.response?.data?.detail || "Erro na busca ORCID");
+    }
+  },
+
+  /**
+   * Obtém perfil completo por URL do ORCID
+   */
+  async getProfileByUrl(profileUrl: string) {
+    try {
+      const response = await api.get("/api/orcid/profile/by-url", {
+        params: {
+          profile_url: profileUrl,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("Erro ao obter perfil ORCID:", error);
+      throw new Error(
+        error.response?.data?.detail || "Erro ao obter perfil ORCID"
+      );
+    }
+  },
+
+  /**
+   * Busca por palavra-chave no ORCID
+   */
+  async searchByKeyword(keyword: string, maxResults = 10) {
+    try {
+      const response = await api.get("/api/orcid/search/by-keyword", {
+        params: {
+          keyword,
+          max_results: maxResults,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("Erro na busca por keyword ORCID:", error);
+      throw new Error(
+        error.response?.data?.detail || "Erro na busca por keyword"
+      );
+    }
+  },
+
+  /**
+   * Health check do serviço ORCID
+   */
+  async healthCheck() {
+    try {
+      const response = await api.get("/api/orcid/health");
+      return response.data;
+    } catch (error: any) {
+      throw new Error("Serviço ORCID indisponível");
+    }
   },
 };
 

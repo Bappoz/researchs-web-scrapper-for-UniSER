@@ -63,7 +63,11 @@ class ConsolidatedExcelExporter:
             
             for research in research_data:
                 researcher_info = research.get("researcher_info", {})
+                
+                # Buscar publicações em diferentes campos (compatibilidade com estruturas antigas/novas)
                 publications = research.get("publications", [])
+                if not publications:
+                    publications = research.get("data", {}).get("publications", [])
                 
                 # Adicionar informações do pesquisador ao resumo
                 timestamp = research.get("timestamp", "")
