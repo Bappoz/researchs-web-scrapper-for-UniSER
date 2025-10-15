@@ -677,14 +677,16 @@ class ScholarExtractor:
                 return {"success": False, "error": "Não foi possível extrair Author ID da URL"}
             
             print(f"🎯 Extraindo dados via SerpAPI para Author ID: {author_id}")
+            print(f"📚 Solicitadas {max_publications} publicações com paginação SerpAPI")
             
-            # Buscar publicações usando SerpAPI
+            # Primeira requisição para obter dados básicos do autor
             params = {
                 "api_key": api_key,
                 "engine": "google_scholar_author", 
                 "author_id": author_id,
                 "hl": "pt-BR",
-                "num": min(100, max_publications)
+                "num": min(20, max_publications),  # Começar com 20 por página
+                "start": 0
             }
             
             search = GoogleSearch(params)
@@ -737,19 +739,63 @@ class ScholarExtractor:
             else:
                 print("❌ Nenhuma informação de cited_by encontrada na resposta SerpAPI")
             
-            # Extrair publicações
+            # Extrair publicações com paginação
             publications = []
-            if 'articles' in results:
-                for article in results['articles'][:max_publications]:
-                    publications.append({
-                        "title": article.get("title", "Título não disponível"),
-                        "venue": article.get("publication", "Venue não especificada"), 
-                        "authors": article.get("authors", "Autores não especificados"),
-                        "year": article.get("year"),
-                        "citations": article.get("cited_by", {}).get("value", 0) if article.get("cited_by") else 0,
-                        "type": "Artigo",
-                        "platform": "scholar_serpapi"
-                    })
+            current_start = 0
+            articles_per_page = 20
+            max_pages = min(5, (max_publications + articles_per_page - 1) // articles_per_page)  # Máximo 5 páginas para evitar muitas requests
+            
+            print(f"🔄 Iniciando paginação SerpAPI: {max_pages} páginas, {articles_per_page} artigos por página")
+            
+            for page in range(max_pages):
+                if len(publications) >= max_publications:
+                    break
+                
+                # Configurar parâmetros para esta página
+                if page > 0:
+                    # Aguardar entre páginas para evitar rate limiting
+                    time.sleep(random.uniform(2, 4))
+                    
+                    params["start"] = current_start
+                    print(f"📄 Carregando página {page + 1} (start={current_start})")
+                    
+                    search = GoogleSearch(params)
+                    page_results = search.get_dict()
+                    
+                    if 'error' in page_results:
+                        print(f"❌ Erro na página {page + 1}: {page_results['error']}")
+                        break
+                else:
+                    # Usar resultado da primeira requisição
+                    page_results = results
+                    print(f"📄 Processando página 1 (inicial)")
+                
+                # Extrair artigos desta página
+                page_articles = []
+                if 'articles' in page_results:
+                    remaining_needed = max_publications - len(publications)
+                    articles_to_process = page_results['articles'][:remaining_needed]
+                    
+                    for article in articles_to_process:
+                        page_articles.append({
+                            "title": article.get("title", "Título não disponível"),
+                            "venue": article.get("publication", "Venue não especificada"), 
+                            "authors": article.get("authors", "Autores não especificados"),
+                            "year": article.get("year"),
+                            "citations": article.get("cited_by", {}).get("value", 0) if article.get("cited_by") else 0,
+                            "type": "Artigo",
+                            "link": article.get("link", scholar_url)
+                        })
+                
+                publications.extend(page_articles)
+                print(f"📄 Página {page + 1}: {len(page_articles)} artigos adicionados (total: {len(publications)})")
+                
+                # Se esta página trouxe menos artigos que o esperado, pode ser a última
+                if len(page_articles) < articles_per_page:
+                    print(f"📄 Última página detectada (apenas {len(page_articles)} artigos)")
+                    break
+                
+                current_start += articles_per_page
             
             print(f"✅ SerpAPI extraído com sucesso:")
             print(f"   👤 Nome: {name}")

@@ -551,7 +551,8 @@ Esta é uma proteção normal do Lattes contra bots. O acesso manual sempre func
 
   const handleSearchByLinkScholar = async (
     profileUrl: string,
-    useKeywordFilter: boolean = false
+    useKeywordFilter: boolean = false,
+    maxPublications: number = 20
   ) => {
     setIsLoading(true);
     setLoadingPlatform("link-scholar");
@@ -560,15 +561,16 @@ Esta é uma proteção normal do Lattes contra bots. O acesso manual sempre func
       console.log(
         "📄 Extraindo dados Scholar:",
         profileUrl,
-        `- Filtro keywords: ${useKeywordFilter}`
+        `- Filtro keywords: ${useKeywordFilter}`,
+        `- Máx. publicações: ${maxPublications}`
       );
 
-      // Usar a função existente com parâmetro configurável para filtro de keywords
+      // Usar a função existente com parâmetro configurável para filtro de keywords e maxPublications
       const result = await academicService.searchByProfileLink(
         profileUrl,
         "scholar",
         false, // exportExcel
-        20, // maxPublications
+        maxPublications, // maxPublications
         useKeywordFilter // filterKeywords - controlado pelo usuário
       );
 

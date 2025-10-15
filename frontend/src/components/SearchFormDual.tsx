@@ -25,7 +25,8 @@ interface SearchFormDualProps {
   onSearchByLinkOrcid: (profileUrl: string) => void;
   onSearchByLinkScholar: (
     profileUrl: string,
-    useKeywordFilter: boolean
+    useKeywordFilter: boolean,
+    maxPublications: number
   ) => void;
 
   isLoading: boolean;
@@ -47,6 +48,7 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
   const [nameQuery, setNameQuery] = useState("");
   const [linkQuery, setLinkQuery] = useState("");
   const [useKeywordFilter, setUseKeywordFilter] = useState(false);
+  const [maxPublications, setMaxPublications] = useState(20);
 
   const isButtonLoading = (platform: string) => {
     return isLoading && loadingPlatform === platform;
@@ -192,9 +194,9 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
           </div>
         </div>
 
-        {/* Controle de filtro para Scholar */}
-        <div className='mb-4 bg-orange-50 border border-orange-200 rounded-lg p-3'>
-          <div className='flex items-center'>
+        {/* Controle de filtro para Scholar e quantidade de publicações */}
+        <div className='mb-4 flex flex-col md:flex-row md:items-center gap-3'>
+          <div className='flex items-center bg-orange-50 border border-orange-200 rounded-lg p-3'>
             <input
               type='checkbox'
               id='keyword-filter'
@@ -210,11 +212,24 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
               🔍 Aplicar filtro por palavras-chave (Scholar)
             </label>
           </div>
-          <p className='text-xs text-orange-600 mt-1 ml-6'>
-            {useKeywordFilter
-              ? "Filtra publicações por relevância científica específica"
-              : "Mostra todas as publicações do perfil (recomendado)"}
-          </p>
+          <div className='flex items-center bg-blue-50 border border-blue-200 rounded-lg p-3'>
+            <label
+              htmlFor='max-publications'
+              className='text-sm text-blue-700 mr-2'
+            >
+              📄 Máx. publicações:
+            </label>
+            <input
+              id='max-publications'
+              type='number'
+              min={1}
+              max={200}
+              value={maxPublications}
+              onChange={(e) => setMaxPublications(Number(e.target.value))}
+              className='w-20 px-2 py-1 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base'
+              disabled={disabled || isLoading}
+            />
+          </div>
         </div>
 
         {/* Botões para pesquisa por link */}
@@ -257,7 +272,11 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
 
           <button
             onClick={() =>
-              onSearchByLinkScholar(linkQuery.trim(), useKeywordFilter)
+              onSearchByLinkScholar(
+                linkQuery.trim(),
+                useKeywordFilter,
+                maxPublications
+              )
             }
             disabled={isLinkButtonDisabled("link-scholar")}
             className='flex items-center justify-center px-4 py-3 border-2 border-orange-600 text-sm font-medium rounded-lg text-white bg-orange-700 hover:bg-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-600 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed transition-all'

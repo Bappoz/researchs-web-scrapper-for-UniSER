@@ -102,8 +102,8 @@ class ResearchDatabase:
     async def save_research_result_async(self, research_data: Dict[str, Any]) -> bool:
         """Salvar resultado de pesquisa no banco (assíncrono)"""
         try:
-            if not self.async_collection:
-                if not self.connect_async():
+            if self.async_collection is None:
+                if not await self.connect_async():
                     return False
             
             # Preparar documento
