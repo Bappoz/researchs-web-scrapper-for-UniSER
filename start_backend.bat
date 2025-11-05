@@ -1,0 +1,3 @@
+@echo off
+echo Iniciando backend...
+python main.py

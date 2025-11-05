@@ -34,7 +34,6 @@ import {
 // import comprehensiveService from "../services/api_new"; // Uncomment if comprehensiveService is a default export and you need it
 
 // Componentes
-import SearchFormNew from "../components/SearchFormNew";
 import SearchFormDual from "../components/SearchFormDual";
 import ResultsDisplay from "../components/ResultsDisplay";
 import StatsCardsSimple from "../components/StatsCardsSimple";
@@ -960,14 +959,14 @@ Esta é uma proteção normal do Lattes contra bots. O acesso manual sempre func
                   <span className='text-sm text-gray-600'>
                     Plataforma Lattes
                   </span>
-                  <span className='text-sm font-medium text-green-600'>
-                    Ativo
+                  <span className='text-sm font-medium text-red-600'>
+                    Inativo
                   </span>
                 </div>
                 <div className='flex justify-between items-center'>
                   <span className='text-sm text-gray-600'>ORCID</span>
-                  <span className='text-sm font-medium text-green-600'>
-                    Ativo
+                  <span className='text-sm font-medium text-red-600'>
+                    Inativo
                   </span>
                 </div>
                 <div className='flex justify-between items-center pt-2 border-t border-gray-200'>

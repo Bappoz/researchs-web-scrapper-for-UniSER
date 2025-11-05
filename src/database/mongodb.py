@@ -66,7 +66,7 @@ class ResearchDatabase:
     def save_research_result(self, research_data: Dict[str, Any]) -> bool:
         """Salvar resultado de pesquisa no banco"""
         try:
-            if not self.collection:
+            if self.collection is None:  # Corrigido para comparação explícita
                 if not self.connect():
                     return False
             
