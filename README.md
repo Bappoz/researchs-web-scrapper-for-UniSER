@@ -18,7 +18,7 @@
 2. **Execute o instalador automático:**
    ```bash
    # Clique duas vezes no arquivo:
-   install_and_setup.bat
+   ./install_and_setup.bat 
    ```
 
 3. **Configure as chaves API:**
@@ -29,10 +29,10 @@
 4. **Inicie o projeto:**
    ```bash
    # Backend (mantenha esta janela aberta):
-   start_backend.bat
+   ./start_backend.bat
 
    # Frontend (em outra janela do terminal):
-   start_frontend.bat
+   ./start_frontend.bat
    ```
 
 ### Para Linux/Mac
@@ -67,7 +67,7 @@
    ./start_frontend.sh &
    ```
 
-### ��� Instalação com Docker (Mais Fácil)
+### Instalação com Docker (Mais Fácil)
 
 Se preferir uma instalação automática:
 
