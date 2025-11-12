@@ -5,6 +5,7 @@
 ### 1. Backend (Python/FastAPI)
 
 #### Novo Scraper do Escavador
+
 **Arquivo**: `src/scraper/escavador_scraper.py`
 
 - Classe `EscavadorScraper` que busca resumos de perfis Lattes
@@ -18,6 +19,7 @@
 - Não requer API keys ou configurações adicionais
 
 #### Integração no Serviço do Google Scholar
+
 **Arquivo**: `src/services/services.py`
 
 - Novo método: `get_lattes_summary_via_escavador(author_name)`
@@ -26,9 +28,11 @@
 - Retorna dados estruturados com tratamento de erros
 
 #### Novos Endpoints da API
+
 **Arquivo**: `src/api.py`
 
-1. **Endpoint Específico**: 
+1. **Endpoint Específico**:
+
    - `GET /search/lattes-summary/escavador?name={nome}`
    - Busca apenas o resumo do Lattes
    - Retorna dados estruturados em JSON
@@ -42,6 +46,7 @@
 ### 2. Frontend (React/TypeScript)
 
 #### Novo Componente Visual
+
 **Arquivo**: `frontend/src/components/LattesSummaryCard.tsx`
 
 - Card elegante e responsivo para exibir resumo do Lattes
@@ -56,6 +61,7 @@
 - Estados de loading e erro tratados
 
 #### Serviço de API Frontend
+
 **Arquivo**: `frontend/src/services/api_new.ts`
 
 - Novo método: `getLattesSummaryViaEscavador(name: string)`
@@ -64,6 +70,7 @@
 - Tratamento de erros
 
 #### Integração na Exibição de Resultados
+
 **Arquivo**: `frontend/src/components/ResultsDisplay.tsx`
 
 - Importa o `LattesSummaryCard`
@@ -74,6 +81,7 @@
 ### 3. Documentação
 
 #### Guia de Integração
+
 **Arquivo**: `docs/ESCAVADOR_INTEGRATION.md`
 
 - Documentação completa da funcionalidade
@@ -83,6 +91,7 @@
 - Lista de arquivos modificados
 
 #### README Atualizado
+
 **Arquivo**: `README.md`
 
 - Adicionada seção de funcionalidades
@@ -92,6 +101,7 @@
 ### 4. Testes
 
 #### Script de Teste
+
 **Arquivo**: `__tests__/test_escavador_integration.py`
 
 - Teste direto do scraper
@@ -104,16 +114,19 @@
 ### Fluxo de Uso Padrão
 
 1. **Usuário faz busca por autor no Google Scholar**
+
    ```
    Usuário → Frontend → API → GoogleScholarService
    ```
 
 2. **Sistema busca dados do Scholar**
+
    ```
    GoogleScholarService → SerpAPI → Retorna publicações
    ```
 
 3. **Sistema busca resumo do Lattes automaticamente**
+
    ```
    GoogleScholarService → EscavadorScraper → Escavador → Retorna resumo
    ```
@@ -181,6 +194,7 @@
 ## 📦 ARQUIVOS CRIADOS/MODIFICADOS
 
 ### Novos Arquivos (5)
+
 ```
 ✨ src/scraper/escavador_scraper.py
 ✨ frontend/src/components/LattesSummaryCard.tsx
@@ -190,6 +204,7 @@
 ```
 
 ### Arquivos Modificados (4)
+
 ```
 📝 src/services/services.py
 📝 src/api.py
@@ -203,17 +218,20 @@
 Para usar a nova funcionalidade:
 
 1. **Testar a Integração**:
+
    ```bash
    python __tests__/test_escavador_integration.py
    ```
 
 2. **Iniciar o Backend**:
+
    ```bash
    cd src
    python api.py
    ```
 
 3. **Iniciar o Frontend**:
+
    ```bash
    cd frontend
    npm run dev

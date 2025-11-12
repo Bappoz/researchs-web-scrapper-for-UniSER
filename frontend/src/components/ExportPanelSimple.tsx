@@ -215,9 +215,7 @@ const ExportPanel: React.FC = () => {
               ) : (
                 <BarChart3 className='h-5 w-5 mr-2 flex-shrink-0' />
               )}
-              <span className='font-medium'>
-                {consolidatedStatus.message}
-              </span>
+              <span className='font-medium'>{consolidatedStatus.message}</span>
             </div>
           </div>
         )}

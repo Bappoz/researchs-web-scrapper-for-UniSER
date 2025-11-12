@@ -13,11 +13,13 @@ Fornecer informações resumidas do perfil acadêmico de pesquisadores brasileir
 ### Backend
 
 1. **Novo Scraper**: `src/scraper/escavador_scraper.py`
+
    - Busca informações no site Escavador
    - Extrai resumo do perfil Lattes
    - Retorna dados estruturados
 
 2. **Serviço Integrado**: `src/services/services.py`
+
    - Método `get_lattes_summary_via_escavador()`
    - Integrado ao `GoogleScholarService`
 
@@ -28,10 +30,12 @@ Fornecer informações resumidas do perfil acadêmico de pesquisadores brasileir
 ### Frontend
 
 1. **Novo Componente**: `LattesSummaryCard.tsx`
+
    - Exibe resumo do Lattes de forma elegante
    - Card estilizado com informações estruturadas
 
 2. **Serviço de API**: `api_new.ts`
+
    - Método `getLattesSummaryViaEscavador()`
 
 3. **Integração**: `ResultsDisplay.tsx`
@@ -57,9 +61,9 @@ Ao buscar um autor no Google Scholar, o resumo do Lattes é buscado automaticame
 // Frontend
 const response = await academicService.searchAuthorScholar(
   "Nome do Pesquisador",
-  10,  // max_results
-  false,  // export_excel
-  true  // include_lattes_summary (padrão: true)
+  10, // max_results
+  false, // export_excel
+  true // include_lattes_summary (padrão: true)
 );
 
 // Acessar resumo do Lattes
@@ -114,6 +118,7 @@ print(lattes_data['summary'])
 ## 🎨 Interface
 
 O resumo é exibido em um card elegante com:
+
 - 📚 Ícone e título destacado
 - 📋 Informações estruturadas
 - 🔗 Link direto para o Lattes completo
@@ -142,11 +147,13 @@ O sistema é robusto e lida com falhas graciosamente:
 ## 📚 Arquivos Modificados/Criados
 
 ### Novos Arquivos
+
 - `src/scraper/escavador_scraper.py`
 - `frontend/src/components/LattesSummaryCard.tsx`
 - `docs/ESCAVADOR_INTEGRATION.md`
 
 ### Modificados
+
 - `src/services/services.py`
 - `src/api.py`
 - `frontend/src/services/api_new.ts`

@@ -42,7 +42,9 @@ interface MongoStats {
 
 const ResearchersHistory: React.FC = () => {
   const [researchers, setResearchers] = useState<Researcher[]>([]);
-  const [filteredResearchers, setFilteredResearchers] = useState<Researcher[]>([]);
+  const [filteredResearchers, setFilteredResearchers] = useState<Researcher[]>(
+    []
+  );
   const [stats, setStats] = useState<MongoStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -62,7 +64,9 @@ const ResearchersHistory: React.FC = () => {
         (r) =>
           r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           r.institution?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          r.lattes_institution?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          r.lattes_institution
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
           r.lattes_area?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredResearchers(filtered);
@@ -113,9 +117,12 @@ const ResearchersHistory: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/mongodb/researcher/${id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `http://localhost:8000/mongodb/researcher/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Erro ${response.status}: ${response.statusText}`);
@@ -192,45 +199,47 @@ const ResearchersHistory: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className='min-h-screen bg-gray-50'>
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
+      <header className='bg-white shadow-sm border-b border-gray-200'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+          <div className='flex justify-between items-center h-16'>
+            <div className='flex items-center'>
+              <BookOpen className='h-8 w-8 text-blue-600 mr-3' />
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className='text-xl font-semibold text-gray-900'>
                   Histórico de Pesquisadores
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className='text-sm text-gray-500'>
                   Todos os pesquisadores coletados do MongoDB
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
+            <div className='flex items-center space-x-3'>
               <button
                 onClick={loadResearchers}
                 disabled={isLoading}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-                title="Atualizar lista"
+                className='p-2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50'
+                title='Atualizar lista'
               >
-                <RefreshCw className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
+                <RefreshCw
+                  className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`}
+                />
               </button>
 
               <button
                 onClick={handleClearAll}
                 disabled={isLoading}
-                className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                className='inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50'
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className='h-4 w-4 mr-2' />
                 Limpar Tudo
               </button>
 
               <button
-                onClick={() => window.location.hash = "#/"}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                onClick={() => (window.location.hash = "#/")}
+                className='inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors'
               >
                 Voltar à Busca
               </button>
@@ -240,67 +249,83 @@ const ResearchersHistory: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {/* Statistics Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
+          <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-8'>
+            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+              <div className='flex items-center justify-between'>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total de Pesquisas</p>
-                  <p className="text-2xl font-bold text-blue-900">{stats.total_searches}</p>
+                  <p className='text-sm font-medium text-gray-600'>
+                    Total de Pesquisas
+                  </p>
+                  <p className='text-2xl font-bold text-blue-900'>
+                    {stats.total_searches}
+                  </p>
                 </div>
-                <Users className="h-10 w-10 text-blue-600" />
+                <Users className='h-10 w-10 text-blue-600' />
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
+            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+              <div className='flex items-center justify-between'>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Pesquisas Filtradas</p>
-                  <p className="text-2xl font-bold text-green-900">{stats.filtered_searches}</p>
+                  <p className='text-sm font-medium text-gray-600'>
+                    Pesquisas Filtradas
+                  </p>
+                  <p className='text-2xl font-bold text-green-900'>
+                    {stats.filtered_searches}
+                  </p>
                 </div>
-                <CheckCircle className="h-10 w-10 text-green-600" />
+                <CheckCircle className='h-10 w-10 text-green-600' />
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
+            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+              <div className='flex items-center justify-between'>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total de Publicações</p>
-                  <p className="text-2xl font-bold text-purple-900">{stats.total_publications}</p>
+                  <p className='text-sm font-medium text-gray-600'>
+                    Total de Publicações
+                  </p>
+                  <p className='text-2xl font-bold text-purple-900'>
+                    {stats.total_publications}
+                  </p>
                 </div>
-                <BookOpen className="h-10 w-10 text-purple-600" />
+                <BookOpen className='h-10 w-10 text-purple-600' />
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
+            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+              <div className='flex items-center justify-between'>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Pesquisadores</p>
-                  <p className="text-2xl font-bold text-indigo-900">{researchers.length}</p>
+                  <p className='text-sm font-medium text-gray-600'>
+                    Pesquisadores
+                  </p>
+                  <p className='text-2xl font-bold text-indigo-900'>
+                    {researchers.length}
+                  </p>
                 </div>
-                <GraduationCap className="h-10 w-10 text-indigo-600" />
+                <GraduationCap className='h-10 w-10 text-indigo-600' />
               </div>
             </div>
           </div>
         )}
 
         {/* Search Bar */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-          <div className="flex items-center space-x-3">
-            <Search className="h-5 w-5 text-gray-400" />
+        <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6'>
+          <div className='flex items-center space-x-3'>
+            <Search className='h-5 w-5 text-gray-400' />
             <input
-              type="text"
-              placeholder="Buscar por nome, instituição ou área de pesquisa..."
+              type='text'
+              placeholder='Buscar por nome, instituição ou área de pesquisa...'
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 outline-none text-gray-900 placeholder-gray-400"
+              className='flex-1 outline-none text-gray-900 placeholder-gray-400'
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="text-gray-400 hover:text-gray-600"
+                className='text-gray-400 hover:text-gray-600'
               >
                 ✕
               </button>
@@ -317,76 +342,82 @@ const ResearchersHistory: React.FC = () => {
                 : "bg-red-50 border-red-200 text-red-700"
             }`}
           >
-            <div className="flex items-center">
+            <div className='flex items-center'>
               {statusMessage.type === "success" ? (
-                <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+                <CheckCircle className='h-5 w-5 mr-2 flex-shrink-0' />
               ) : (
-                <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+                <AlertCircle className='h-5 w-5 mr-2 flex-shrink-0' />
               )}
-              <span className="font-medium">{statusMessage.message}</span>
+              <span className='font-medium'>{statusMessage.message}</span>
             </div>
           </div>
         )}
 
         {/* Researchers Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden'>
+          <div className='overflow-x-auto'>
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mr-3" />
-                <span className="text-gray-600">Carregando pesquisadores...</span>
+              <div className='flex items-center justify-center py-12'>
+                <Loader2 className='h-8 w-8 animate-spin text-blue-600 mr-3' />
+                <span className='text-gray-600'>
+                  Carregando pesquisadores...
+                </span>
               </div>
             ) : filteredResearchers.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">
+              <div className='text-center py-12'>
+                <Users className='h-16 w-16 text-gray-300 mx-auto mb-4' />
+                <p className='text-gray-500 text-lg'>
                   {searchTerm
                     ? "Nenhum pesquisador encontrado com esses critérios"
                     : "Nenhum pesquisador coletado ainda"}
                 </p>
                 {!searchTerm && (
-                  <p className="text-gray-400 text-sm mt-2">
-                    Faça uma busca no Google Scholar para começar a coletar dados
+                  <p className='text-gray-400 text-sm mt-2'>
+                    Faça uma busca no Google Scholar para começar a coletar
+                    dados
                   </p>
                 )}
               </div>
             ) : (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className='min-w-full divide-y divide-gray-200'>
+                <thead className='bg-gray-50'>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                       Pesquisador
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                       Instituição
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                       Métricas Scholar
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                       Resumo Lattes
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
                       Ações
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className='bg-white divide-y divide-gray-200'>
                   {filteredResearchers.map((researcher) => (
-                    <tr key={researcher.id || researcher.name} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <GraduationCap className="h-8 w-8 text-blue-600 mr-3" />
+                    <tr
+                      key={researcher.id || researcher.name}
+                      className='hover:bg-gray-50'
+                    >
+                      <td className='px-6 py-4 whitespace-nowrap'>
+                        <div className='flex items-center'>
+                          <GraduationCap className='h-8 w-8 text-blue-600 mr-3' />
                           <div>
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className='text-sm font-medium text-gray-900'>
                               {researcher.name || "Nome não disponível"}
                             </div>
                             {researcher.profile_url && (
                               <a
                                 href={researcher.profile_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='text-xs text-blue-600 hover:underline'
                               >
                                 Ver perfil →
                               </a>
@@ -394,67 +425,82 @@ const ResearchersHistory: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {researcher.institution || researcher.lattes_institution || "-"}
+                      <td className='px-6 py-4'>
+                        <div className='text-sm text-gray-900'>
+                          {researcher.institution ||
+                            researcher.lattes_institution ||
+                            "-"}
                         </div>
                         {researcher.lattes_area && (
-                          <div className="text-xs text-gray-500">
+                          <div className='text-xs text-gray-500'>
                             Área: {researcher.lattes_area}
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                      <td className='px-6 py-4 whitespace-nowrap'>
+                        <div className='text-sm text-gray-900'>
                           {researcher.h_index !== undefined && (
-                            <div>H-Index: <span className="font-semibold">{researcher.h_index}</span></div>
+                            <div>
+                              H-Index:{" "}
+                              <span className='font-semibold'>
+                                {researcher.h_index}
+                              </span>
+                            </div>
                           )}
                           {researcher.i10_index !== undefined && (
-                            <div>i10-Index: <span className="font-semibold">{researcher.i10_index}</span></div>
+                            <div>
+                              i10-Index:{" "}
+                              <span className='font-semibold'>
+                                {researcher.i10_index}
+                              </span>
+                            </div>
                           )}
                           {researcher.total_citations !== undefined && (
-                            <div className="text-xs text-gray-500">
+                            <div className='text-xs text-gray-500'>
                               {researcher.total_citations} citações
                             </div>
                           )}
                           {researcher.total_publications !== undefined && (
-                            <div className="text-xs text-gray-500">
+                            <div className='text-xs text-gray-500'>
                               {researcher.total_publications} publicações
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className='px-6 py-4'>
                         {researcher.lattes_summary ? (
-                          <div className="text-sm text-gray-700 max-w-md">
-                            <div className="line-clamp-3">
+                          <div className='text-sm text-gray-700 max-w-md'>
+                            <div className='line-clamp-3'>
                               {researcher.lattes_summary}
                             </div>
                             {researcher.lattes_summary.length > 100 && (
                               <button
-                                onClick={() =>
-                                  alert(researcher.lattes_summary)
-                                }
-                                className="text-xs text-blue-600 hover:underline mt-1"
+                                onClick={() => alert(researcher.lattes_summary)}
+                                className='text-xs text-blue-600 hover:underline mt-1'
                               >
                                 Ver completo
                               </button>
                             )}
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">Não disponível</span>
+                          <span className='text-sm text-gray-400'>
+                            Não disponível
+                          </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
                         <button
                           onClick={() =>
-                            handleDeleteResearcher(researcher.name, researcher.name)
+                            handleDeleteResearcher(
+                              researcher.name,
+                              researcher.name
+                            )
                           }
                           disabled={isLoading}
-                          className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                          className='text-red-600 hover:text-red-900 disabled:opacity-50'
                           title={`Deletar ${researcher.name}`}
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Trash2 className='h-5 w-5' />
                         </button>
                       </td>
                     </tr>
@@ -467,8 +513,9 @@ const ResearchersHistory: React.FC = () => {
 
         {/* Results count */}
         {filteredResearchers.length > 0 && (
-          <div className="mt-4 text-center text-sm text-gray-600">
-            Mostrando {filteredResearchers.length} de {researchers.length} pesquisadores
+          <div className='mt-4 text-center text-sm text-gray-600'>
+            Mostrando {filteredResearchers.length} de {researchers.length}{" "}
+            pesquisadores
           </div>
         )}
       </main>

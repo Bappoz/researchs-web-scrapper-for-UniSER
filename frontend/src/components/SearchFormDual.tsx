@@ -114,7 +114,7 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
             )}
           </button>
         </div>
-        
+
         <p className='text-xs text-blue-600 mt-3 text-center italic'>
           💡 O resumo do Lattes será buscado automaticamente via Escavador
         </p>
@@ -216,7 +216,7 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
             )}
           </button>
         </div>
-        
+
         <p className='text-xs text-green-600 mt-3 text-center italic'>
           💡 O resumo do Lattes será incluído automaticamente
         </p>

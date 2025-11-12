@@ -23,22 +23,26 @@
 ### Para Windows
 
 1. **Baixe e instale os programas necessários:**
+
    - Python 3.12+: https://www.python.org/downloads/
    - Node.js 18+: https://nodejs.org/
    - MongoDB: https://www.mongodb.com/try/download/community
 
 2. **Execute o instalador automático:**
+
    ```bash
    # Clique duas vezes no arquivo:
-   ./install_and_setup.bat 
+   ./install_and_setup.bat
    ```
 
 3. **Configure as chaves API:**
+
    - Abra o arquivo `.env` (criado pelo instalador)
    - Adicione sua chave do SerpAPI: `SERPAPI_KEY=sua_chave_aqui`
    - Pegue a chave gratuita em: https://serpapi.com/
 
 4. **Inicie o projeto:**
+
    ```bash
    # Backend (mantenha esta janela aberta):
    ./start_backend.bat
@@ -50,6 +54,7 @@
 ### Para Linux/Mac
 
 1. **Instale os programas necessários:**
+
    ```bash
    # Ubuntu/Debian:
    sudo apt update
@@ -60,17 +65,20 @@
    ```
 
 2. **Execute o instalador automático:**
+
    ```bash
    chmod +x install_and_setup.sh
    ./install_and_setup.sh
    ```
 
 3. **Configure as chaves API:**
+
    - Edite o arquivo `.env`
    - Adicione: `SERPAPI_KEY=sua_chave_aqui`
    - Chave gratuita: https://serpapi.com/
 
 4. **Inicie o projeto:**
+
    ```bash
    # Backend:
    ./start_backend.sh &
@@ -97,11 +105,13 @@ Acesse em: http://localhost:3000
 1. **Abra o navegador:** http://localhost:5173 (desenvolvimento) ou http://localhost:3000 (Docker)
 
 2. **Faça uma busca:**
+
    - Digite o nome do pesquisador (ex: "João Silva")
    - Escolha a plataforma (Google Scholar, Lattes, ORCID)
    - Clique em "Buscar"
 
 3. **Veja os resultados:**
+
    - Lista de pesquisadores encontrados
    - Clique em um pesquisador para ver detalhes
    - Veja publicações, citações, etc.
@@ -115,18 +125,22 @@ Acesse em: http://localhost:3000
 ## ❓ Problemas Comuns
 
 ### "Python não encontrado"
+
 - Instale Python 3.12+ do site oficial
 - Reinicie o computador
 
 ### "Node.js não encontrado"
+
 - Instale Node.js 18+ do site oficial
 - Reinicie o computador
 
 ### "Erro de API"
+
 - Verifique se colocou a chave correta no `.env`
 - Chave gratuita em: https://serpapi.com/
 
 ### "Porta ocupada"
+
 - Feche outros programas usando a porta 8000 ou 5173
 - Ou mude a porta no arquivo de configuração
 
