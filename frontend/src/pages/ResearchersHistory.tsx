@@ -15,6 +15,7 @@ import {
   BookOpen,
   GraduationCap,
 } from "lucide-react";
+import DarkModeToggle from "../components/DarkModeToggle";
 
 interface Researcher {
   id: string; // Este é o nome do pesquisador (vem do backend como "id")
@@ -199,28 +200,30 @@ const ResearchersHistory: React.FC = () => {
   };
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200'>
       {/* Header */}
-      <header className='bg-white shadow-sm border-b border-gray-200'>
+      <header className='bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors duration-200'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='flex justify-between items-center h-16'>
             <div className='flex items-center'>
-              <BookOpen className='h-8 w-8 text-blue-600 mr-3' />
+              <BookOpen className='h-8 w-8 text-blue-600 dark:text-blue-400 mr-3' />
               <div>
-                <h1 className='text-xl font-semibold text-gray-900'>
+                <h1 className='text-xl font-semibold text-gray-900 dark:text-white'>
                   Histórico de Pesquisadores
                 </h1>
-                <p className='text-sm text-gray-500'>
+                <p className='text-sm text-gray-500 dark:text-gray-400'>
                   Todos os pesquisadores coletados do MongoDB
                 </p>
               </div>
             </div>
 
             <div className='flex items-center space-x-3'>
+              <DarkModeToggle />
+
               <button
                 onClick={loadResearchers}
                 disabled={isLoading}
-                className='p-2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50'
+                className='p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50'
                 title='Atualizar lista'
               >
                 <RefreshCw
@@ -253,66 +256,66 @@ const ResearchersHistory: React.FC = () => {
         {/* Statistics Cards */}
         {stats && (
           <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-8'>
-            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <p className='text-sm font-medium text-gray-600'>
+                  <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
                     Total de Pesquisas
                   </p>
-                  <p className='text-2xl font-bold text-blue-900'>
+                  <p className='text-2xl font-bold text-blue-900 dark:text-blue-400'>
                     {stats.total_searches}
                   </p>
                 </div>
-                <Users className='h-10 w-10 text-blue-600' />
+                <Users className='h-10 w-10 text-blue-600 dark:text-blue-400' />
               </div>
             </div>
 
-            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <p className='text-sm font-medium text-gray-600'>
+                  <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
                     Pesquisas Filtradas
                   </p>
-                  <p className='text-2xl font-bold text-green-900'>
+                  <p className='text-2xl font-bold text-green-900 dark:text-green-400'>
                     {stats.filtered_searches}
                   </p>
                 </div>
-                <CheckCircle className='h-10 w-10 text-green-600' />
+                <CheckCircle className='h-10 w-10 text-green-600 dark:text-green-400' />
               </div>
             </div>
 
-            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <p className='text-sm font-medium text-gray-600'>
+                  <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
                     Total de Publicações
                   </p>
-                  <p className='text-2xl font-bold text-purple-900'>
+                  <p className='text-2xl font-bold text-purple-900 dark:text-purple-400'>
                     {stats.total_publications}
                   </p>
                 </div>
-                <BookOpen className='h-10 w-10 text-purple-600' />
+                <BookOpen className='h-10 w-10 text-purple-600 dark:text-purple-400' />
               </div>
             </div>
 
-            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <p className='text-sm font-medium text-gray-600'>
+                  <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
                     Pesquisadores
                   </p>
-                  <p className='text-2xl font-bold text-indigo-900'>
+                  <p className='text-2xl font-bold text-indigo-900 dark:text-indigo-400'>
                     {researchers.length}
                   </p>
                 </div>
-                <GraduationCap className='h-10 w-10 text-indigo-600' />
+                <GraduationCap className='h-10 w-10 text-indigo-600 dark:text-indigo-400' />
               </div>
             </div>
           </div>
         )}
 
         {/* Search Bar */}
-        <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6'>
+        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6 transition-colors duration-200'>
           <div className='flex items-center space-x-3'>
             <Search className='h-5 w-5 text-gray-400' />
             <input
@@ -320,12 +323,12 @@ const ResearchersHistory: React.FC = () => {
               placeholder='Buscar por nome, instituição ou área de pesquisa...'
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className='flex-1 outline-none text-gray-900 placeholder-gray-400'
+              className='flex-1 outline-none bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500'
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className='text-gray-400 hover:text-gray-600'
+                className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
               >
                 ✕
               </button>

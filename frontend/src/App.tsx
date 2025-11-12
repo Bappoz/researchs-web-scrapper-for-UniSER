@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Dashboard from "./pages/Dashboard";
 import ResearchersHistory from "./pages/ResearchersHistory";
+import HelpPage from "./pages/HelpPage";
+import { ThemeProvider } from "./context/ThemeContext";
 import "./index.css";
 
 function App() {
@@ -30,12 +32,18 @@ function App() {
     switch (currentRoute) {
       case "/history":
         return <ResearchersHistory />;
+      case "/help":
+        return <HelpPage />;
       default:
         return <Dashboard />;
     }
   };
 
-  return <div className='App'>{renderPage()}</div>;
+  return (
+    <ThemeProvider>
+      <div className='App'>{renderPage()}</div>
+    </ThemeProvider>
+  );
 }
 
 export default App;

@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   BookOpen,
   History,
+  HelpCircle,
 } from "lucide-react";
 
 import { academicService } from "../services/api_new";
@@ -16,6 +17,7 @@ import ResultsDisplay from "../components/ResultsDisplay";
 import StatsCardsSimple from "../components/StatsCardsSimple";
 import SearchHistorySimple from "../components/SearchHistorySimple";
 import ExportPanelSimple from "../components/ExportPanelSimple";
+import DarkModeToggle from "../components/DarkModeToggle";
 import type { SearchResponse } from "../services/api_new";
 
 const Dashboard: React.FC = () => {
@@ -145,22 +147,31 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <header className='bg-white shadow-sm border-b border-gray-200'>
+    <div className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200'>
+      <header className='bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors duration-200'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='flex justify-between items-center h-16'>
             <div className='flex items-center'>
-              <BookOpen className='h-8 w-8 text-blue-600 mr-3' />
+              <BookOpen className='h-8 w-8 text-blue-600 dark:text-blue-400 mr-3' />
               <div>
-                <h1 className='text-xl font-semibold text-gray-900'>
+                <h1 className='text-xl font-semibold text-gray-900 dark:text-white'>
                   Instituto de Pesquisa Científica
                 </h1>
-                <p className='text-sm text-gray-500'>
+                <p className='text-sm text-gray-500 dark:text-gray-400'>
                   Sistema de Busca Acadêmica - Google Scholar + Lattes
                 </p>
               </div>
             </div>
             <div className='flex items-center space-x-4'>
+              <button
+                onClick={() => (window.location.hash = "#/help")}
+                className='inline-flex items-center px-3 py-2 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-medium rounded-lg transition-colors text-sm'
+                title='Central de Ajuda e Tutoriais'
+              >
+                <HelpCircle className='h-4 w-4 mr-2' />
+                Ajuda
+              </button>
+
               <button
                 onClick={() => (window.location.hash = "#/history")}
                 className='inline-flex items-center px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium rounded-lg transition-colors text-sm'
@@ -170,13 +181,17 @@ const Dashboard: React.FC = () => {
                 Histórico
               </button>
 
+              <DarkModeToggle />
+
               <div className='flex items-center space-x-2'>
                 {getStatusIcon()}
-                <span className='text-sm text-gray-600'>{getStatusText()}</span>
+                <span className='text-sm text-gray-600 dark:text-gray-400'>
+                  {getStatusText()}
+                </span>
               </div>
               <button
                 onClick={checkAPIStatus}
-                className='p-2 text-gray-400 hover:text-gray-600 transition-colors'
+                className='p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
                 title='Verificar status da API'
               >
                 <RefreshCw className='h-4 w-4' />
@@ -198,10 +213,10 @@ const Dashboard: React.FC = () => {
 
         <div className='mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8'>
           <div className='lg:col-span-2 space-y-6'>
-            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200'>
               <div className='flex items-center mb-4'>
-                <Search className='h-5 w-5 text-blue-600 mr-2' />
-                <h2 className='text-lg font-medium text-gray-900'>
+                <Search className='h-5 w-5 text-blue-600 dark:text-blue-400 mr-2' />
+                <h2 className='text-lg font-medium text-gray-900 dark:text-white'>
                   Busca Google Scholar
                 </h2>
               </div>
@@ -216,17 +231,17 @@ const Dashboard: React.FC = () => {
             </div>
 
             {searchResults && (
-              <div className='bg-white rounded-lg shadow-sm border border-gray-200'>
-                <div className='p-6 border-b border-gray-200'>
+              <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200'>
+                <div className='p-6 border-b border-gray-200 dark:border-gray-700'>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center'>
-                      <BarChart3 className='h-5 w-5 text-blue-600 mr-2' />
-                      <h2 className='text-lg font-medium text-gray-900'>
+                      <BarChart3 className='h-5 w-5 text-blue-600 dark:text-blue-400 mr-2' />
+                      <h2 className='text-lg font-medium text-gray-900 dark:text-white'>
                         Resultados da Pesquisa
                       </h2>
                     </div>
                     <div className='flex items-center space-x-2'>
-                      <span className='text-sm text-gray-500'>
+                      <span className='text-sm text-gray-500 dark:text-gray-400'>
                         {searchResults.total_results} resultados em{" "}
                         {searchResults.execution_time.toFixed(2)}s
                       </span>
@@ -238,11 +253,13 @@ const Dashboard: React.FC = () => {
             )}
 
             {isLoading && (
-              <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-12'>
+              <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 transition-colors duration-200'>
                 <div className='text-center'>
-                  <RefreshCw className='h-8 w-8 animate-spin text-blue-600 mx-auto mb-4' />
-                  <p className='text-gray-600'>Buscando no Google Scholar...</p>
-                  <p className='text-sm text-gray-500 mt-2'>
+                  <RefreshCw className='h-8 w-8 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4' />
+                  <p className='text-gray-600 dark:text-gray-300'>
+                    Buscando no Google Scholar...
+                  </p>
+                  <p className='text-sm text-gray-500 dark:text-gray-400 mt-2'>
                     O resumo Lattes será carregado automaticamente
                   </p>
                 </div>
