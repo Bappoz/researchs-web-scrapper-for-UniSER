@@ -12,3 +12,11 @@ build/
 dist/
 node_modules
 .env
+
+# MongoDB local data
+mongodb_data/
+
+# Scripts antigos (substituídos pela pasta scripts/)
+start_backend.bat
+start_frontend.bat
+install_and_setup.bat

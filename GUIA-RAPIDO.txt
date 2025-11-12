@@ -1,0 +1,154 @@
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║        GUIA RÁPIDO - WEB SCRAPPER                             ║
+║        Sistema de Pesquisa Acadêmica                          ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+PARA COMEÇAR (PRIMEIRA VEZ):
+═══════════════════════════════════════════════════════════════
+
+1. Duplo clique em "INICIAR.bat"
+2. Escolha opção [1] - Verificar pré-requisitos
+3. Instale o que estiver faltando (Python, Node.js, MongoDB)
+4. Volte e escolha opção [2] - Instalar dependências
+5. Configure o MongoDB (veja seção abaixo)
+6. Escolha opção [6] - Iniciar TUDO
+
+CONFIGURAR MONGODB (escolha UMA opção):
+═══════════════════════════════════════════════════════════════
+
+OPÇÃO A - MongoDB Atlas (Cloud) - MAIS FÁCIL ☁️
+├─ 1. Acesse: https://www.mongodb.com/cloud/atlas
+├─ 2. Crie conta GRATUITA
+├─ 3. Crie cluster FREE (M0)
+├─ 4. Crie usuário e senha
+├─ 5. Libere seu IP (Network Access → Add IP → Allow Anywhere)
+├─ 6. Copie string de conexão (Connect → Connect your application)
+├─ 7. Renomeie ".env.example" para ".env"
+└─ 8. Cole a string no MONGODB_URI dentro do arquivo .env
+
+OPÇÃO B - MongoDB Local - Para usuários avançados 💻
+├─ 1. Baixe: https://www.mongodb.com/try/download/community
+├─ 2. Instale com opções padrão
+├─ 3. No menu INICIAR.bat, escolha opção [3] antes de usar
+└─ 4. Mantenha a janela do MongoDB aberta enquanto usa o sistema
+
+USO DIÁRIO (após configuração):
+═══════════════════════════════════════════════════════════════
+
+1. Duplo clique em "INICIAR.bat"
+2. Se usa MongoDB local → escolha [3] primeiro
+3. Escolha [6] - Iniciar TUDO
+4. Aguarde o navegador abrir em http://localhost:5173
+5. Faça suas pesquisas!
+
+COMO PESQUISAR NO SISTEMA:
+═══════════════════════════════════════════════════════════════
+
+MÉTODO 1 - Por Nome (busca manual):
+├─ 1. Aba "Nome do Pesquisador"
+├─ 2. Digite nome completo
+├─ 3. Clique "Buscar por Nome"
+├─ 4. Nova aba abre no Google Acadêmico
+├─ 5. Escolha o perfil correto manualmente
+└─ 6. Copie o link e use MÉTODO 2 abaixo
+
+MÉTODO 2 - Por Link do Scholar (automático):
+├─ 1. Aba "Link do Google Scholar"
+├─ 2. Cole o link do perfil
+│     Exemplo: https://scholar.google.com/citations?user=XXX
+├─ 3. Escolha quantas publicações (10, 20, 50...)
+├─ 4. Clique "Buscar Publicações"
+└─ 5. Aguarde 5-30 segundos para extração completa
+
+ENTENDENDO OS RESULTADOS:
+═══════════════════════════════════════════════════════════════
+
+Cards de Estatísticas:
+├─ H-Index: Mede produtividade (quanto maior, melhor)
+├─ I10-Index: Artigos com 10+ citações
+└─ Total de Citações: Soma de todas as citações
+
+Dados do Lattes (extraído automaticamente):
+├─ Instituição: Universidade/Instituto
+├─ Área: Área de atuação acadêmica
+├─ Resumo: Descrição do currículo
+└─ Link: Clique para ver currículo completo no Lattes
+
+Lista de Publicações:
+├─ Título, Autores, Ano
+├─ Número de Citações
+└─ Link para a publicação
+
+EXPORTAR PARA EXCEL:
+═══════════════════════════════════════════════════════════════
+
+1. Clique "Gerar Excel Consolidado" (canto superior direito)
+2. Arquivo baixa automaticamente
+3. Contém 2 abas:
+   ├─ Pesquisadores: Nome, métricas, instituição, etc.
+   └─ Publicações: Todos os artigos coletados
+
+VER HISTÓRICO:
+═══════════════════════════════════════════════════════════════
+
+1. Clique botão "Histórico" no topo
+2. Veja todos pesquisadores já consultados
+3. Use busca para filtrar
+4. Delete específicos ou limpe tudo
+
+DARK MODE (Modo Escuro):
+═══════════════════════════════════════════════════════════════
+
+├─ Clique no ícone ☀️ (sol) ou 🌙 (lua) no topo
+└─ Preferência é salva automaticamente
+
+CENTRAL DE AJUDA:
+═══════════════════════════════════════════════════════════════
+
+├─ Clique botão verde "Ajuda" no topo
+├─ Tutoriais passo a passo detalhados
+└─ FAQ com soluções para problemas comuns
+
+PROBLEMAS COMUNS:
+═══════════════════════════════════════════════════════════════
+
+❌ Backend não inicia
+└─ Solução: Verifique se MongoDB está rodando
+
+❌ Frontend não abre
+└─ Solução: Verifique se Backend iniciou (aguarde 10 segundos)
+
+❌ Dados do Lattes aparecem NULL
+└─ Solução: Normal se pesquisador não tem Lattes ou nome diferente
+
+❌ Excel vazio
+└─ Solução: Faça uma busca primeiro antes de exportar
+
+❌ Erro ao instalar dependências
+└─ Solução: Execute como Administrador, verifique internet
+
+REQUISITOS MÍNIMOS:
+═══════════════════════════════════════════════════════════════
+
+✓ Windows 10/11
+✓ 4GB RAM (recomendado 8GB)
+✓ 2GB espaço em disco
+✓ Conexão com internet
+✓ Python 3.9+
+✓ Node.js 18+
+✓ MongoDB (local ou Atlas)
+
+SUPORTE:
+═══════════════════════════════════════════════════════════════
+
+1. Consulte a Central de Ajuda no sistema
+2. Leia o arquivo LEIA-ME.md
+3. Execute opção [1] do INICIAR.bat para diagnóstico
+4. Contate o desenvolvedor responsável
+
+═══════════════════════════════════════════════════════════════
+Desenvolvido para pesquisa acadêmica e científica
+Versão 1.0.0 - Novembro 2025
+═══════════════════════════════════════════════════════════════
