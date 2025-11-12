@@ -298,6 +298,15 @@ export const academicService = {
     return response.data;
   },
 
+  // ========== RESUMO DO LATTES VIA ESCAVADOR ==========
+
+  async getLattesSummaryViaEscavador(name: string): Promise<any> {
+    const response = await api.get("/search/lattes-summary/escavador", {
+      params: { name },
+    });
+    return response.data;
+  },
+
   // ========== UTILITÁRIOS ==========
 
   async healthCheck(): Promise<any> {

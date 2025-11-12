@@ -1,6 +1,6 @@
 /**
- * 🔍 FORMULÁRIO DE BUSCA - NOME vs LINK
- * Componente com duas seções distintas de pesquisa
+ * 🔍 FORMULÁRIO DE BUSCA - GOOGLE SCHOLAR
+ * Componente simplificado focado no Google Scholar com resumo do Lattes
  */
 
 import React, { useState } from "react";
@@ -9,20 +9,14 @@ import {
   Loader2,
   ExternalLink,
   FileText,
-  Globe,
-  GraduationCap,
   BookOpen,
 } from "lucide-react";
 
 interface SearchFormDualProps {
-  // Pesquisa por nome - abre site externo
-  onSearchByNameLattes: (query: string) => void;
-  onSearchByNameOrcid: (query: string) => void;
+  // Pesquisa por nome - Google Scholar
   onSearchByNameScholar: (query: string) => void;
 
-  // Pesquisa por link - extrai dados completos
-  onSearchByLinkLattes: (profileUrl: string) => void;
-  onSearchByLinkOrcid: (profileUrl: string) => void;
+  // Pesquisa por link - extrai dados completos do Scholar
   onSearchByLinkScholar: (
     profileUrl: string,
     useKeywordFilter: boolean,
@@ -35,11 +29,7 @@ interface SearchFormDualProps {
 }
 
 const SearchFormDual: React.FC<SearchFormDualProps> = ({
-  onSearchByNameLattes,
-  onSearchByNameOrcid,
   onSearchByNameScholar,
-  onSearchByLinkLattes,
-  onSearchByLinkOrcid,
   onSearchByLinkScholar,
   isLoading,
   disabled,
@@ -105,61 +95,29 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
         </div>
 
         {/* Botões para pesquisa por nome */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
-          <button
-            onClick={() => onSearchByNameLattes(nameQuery.trim())}
-            disabled={isNameButtonDisabled("name-lattes")}
-            className='flex items-center justify-center px-4 py-3 border-2 border-green-500 text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed transition-all'
-          >
-            {isButtonLoading("name-lattes") ? (
-              <>
-                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                Abrindo...
-              </>
-            ) : (
-              <>
-                <GraduationCap className='h-4 w-4 mr-2' />
-                🇧🇷 Lattes
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={() => onSearchByNameOrcid(nameQuery.trim())}
-            disabled={isNameButtonDisabled("name-orcid")}
-            className='flex items-center justify-center px-4 py-3 border-2 border-blue-500 text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed transition-all'
-          >
-            {isButtonLoading("name-orcid") ? (
-              <>
-                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                Abrindo...
-              </>
-            ) : (
-              <>
-                <Globe className='h-4 w-4 mr-2' />
-                🌐 ORCID
-              </>
-            )}
-          </button>
-
+        <div className='flex justify-center'>
           <button
             onClick={() => onSearchByNameScholar(nameQuery.trim())}
             disabled={isNameButtonDisabled("name-scholar")}
-            className='flex items-center justify-center px-4 py-3 border-2 border-orange-500 text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed transition-all'
+            className='flex items-center justify-center px-6 py-3 border-2 border-blue-500 text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed transition-all min-w-[250px]'
           >
             {isButtonLoading("name-scholar") ? (
               <>
-                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                Abrindo...
+                <Loader2 className='h-5 w-5 mr-2 animate-spin' />
+                Buscando...
               </>
             ) : (
               <>
-                <BookOpen className='h-4 w-4 mr-2' />
-                📚 Scholar
+                <BookOpen className='h-5 w-5 mr-2' />
+                📚 Buscar no Google Scholar
               </>
             )}
           </button>
         </div>
+        
+        <p className='text-xs text-blue-600 mt-3 text-center italic'>
+          💡 O resumo do Lattes será buscado automaticamente via Escavador
+        </p>
       </div>
 
       {/* SEÇÃO 2: PESQUISA POR LINK - Extrai dados completos */}
@@ -186,7 +144,7 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
               type='url'
               value={linkQuery}
               onChange={(e) => setLinkQuery(e.target.value)}
-              placeholder='Ex: http://lattes.cnpq.br/1234567890123456, https://orcid.org/0000-0000-0000-0000...'
+              placeholder='Ex: https://scholar.google.com/citations?user=abc123...'
               className='w-full px-4 py-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors text-base'
               disabled={disabled || isLoading}
             />
@@ -233,43 +191,7 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
         </div>
 
         {/* Botões para pesquisa por link */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
-          <button
-            onClick={() => onSearchByLinkLattes(linkQuery.trim())}
-            disabled={isLinkButtonDisabled("link-lattes")}
-            className='flex items-center justify-center px-4 py-3 border-2 border-green-600 text-sm font-medium rounded-lg text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed transition-all'
-          >
-            {isButtonLoading("link-lattes") ? (
-              <>
-                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                Extraindo...
-              </>
-            ) : (
-              <>
-                <GraduationCap className='h-4 w-4 mr-2' />
-                Extrair Lattes
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={() => onSearchByLinkOrcid(linkQuery.trim())}
-            disabled={isLinkButtonDisabled("link-orcid")}
-            className='flex items-center justify-center px-4 py-3 border-2 border-blue-600 text-sm font-medium rounded-lg text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed transition-all'
-          >
-            {isButtonLoading("link-orcid") ? (
-              <>
-                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                Extraindo...
-              </>
-            ) : (
-              <>
-                <Globe className='h-4 w-4 mr-2' />
-                Extrair ORCID
-              </>
-            )}
-          </button>
-
+        <div className='flex justify-center'>
           <button
             onClick={() =>
               onSearchByLinkScholar(
@@ -279,21 +201,25 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
               )
             }
             disabled={isLinkButtonDisabled("link-scholar")}
-            className='flex items-center justify-center px-4 py-3 border-2 border-orange-600 text-sm font-medium rounded-lg text-white bg-orange-700 hover:bg-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-600 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed transition-all'
+            className='flex items-center justify-center px-6 py-3 border-2 border-green-600 text-base font-medium rounded-lg text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed transition-all min-w-[250px]'
           >
             {isButtonLoading("link-scholar") ? (
               <>
-                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                <Loader2 className='h-5 w-5 mr-2 animate-spin' />
                 Extraindo...
               </>
             ) : (
               <>
-                <BookOpen className='h-4 w-4 mr-2' />
-                Extrair Scholar*
+                <BookOpen className='h-5 w-5 mr-2' />
+                📚 Extrair do Google Scholar
               </>
             )}
           </button>
         </div>
+        
+        <p className='text-xs text-green-600 mt-3 text-center italic'>
+          💡 O resumo do Lattes será incluído automaticamente
+        </p>
       </div>
 
       {/* Instruções */}
@@ -303,17 +229,14 @@ const SearchFormDual: React.FC<SearchFormDualProps> = ({
           <div>
             <p className='font-medium text-blue-700'>🔍 Pesquisa por Nome:</p>
             <p>• Digite o nome do pesquisador</p>
-            <p>• Clique na plataforma desejada</p>
-            <p>• Será aberto o site oficial com os resultados</p>
+            <p>• Busca publicações no Google Scholar</p>
+            <p>• Inclui resumo do Lattes automaticamente</p>
           </div>
           <div>
             <p className='font-medium text-green-700'>📄 Pesquisa por Link:</p>
-            <p>• Cole o link do perfil encontrado</p>
-            <p>• Clique para extrair dados completos</p>
-            <p>• Veja publicações, artigos e projetos</p>
-            <p className='text-orange-600 text-xs mt-1'>
-              * Scholar pode ter limitações por anti-bot
-            </p>
+            <p>• Cole o link do perfil do Google Scholar</p>
+            <p>• Extrai dados completos de publicações</p>
+            <p>• Inclui resumo do Lattes automaticamente</p>
           </div>
         </div>
       </div>

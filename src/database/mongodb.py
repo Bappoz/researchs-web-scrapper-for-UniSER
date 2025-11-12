@@ -281,6 +281,89 @@ class ResearchDatabase:
             print(f"❌ Erro ao obter estatísticas (async): {e}")
             return {}
     
+    async def get_all_unique_researchers_async(self) -> List[Dict[str, Any]]:
+        """Obter todos os pesquisadores únicos com seus dados agregados"""
+        try:
+            if self.async_collection is None:
+                if not await self.connect_async():
+                    return []
+            
+            # Agregar pesquisadores únicos
+            pipeline = [
+                {
+                    "$group": {
+                        "_id": "$researcher_info.name",
+                        "name": {"$first": "$researcher_info.name"},
+                        "institution": {"$first": "$researcher_info.institution"},
+                        "email": {"$first": "$researcher_info.email"},
+                        "h_index": {"$first": "$researcher_info.h_index"},
+                        "i10_index": {"$first": "$researcher_info.i10_index"},
+                        "total_citations": {"$first": "$researcher_info.total_citations"},
+                        "lattes_summary": {"$first": "$researcher_info.lattes_summary"},
+                        "lattes_institution": {"$first": "$researcher_info.lattes_institution"},
+                        "lattes_area": {"$first": "$researcher_info.lattes_area"},
+                        "lattes_url": {"$first": "$researcher_info.lattes_url"},
+                        "research_areas": {"$first": "$researcher_info.research_areas"},
+                        "total_publications": {"$sum": "$total_publications"},
+                        "searches": {"$sum": 1},
+                        "last_search": {"$max": "$timestamp"}
+                    }
+                },
+                {
+                    "$sort": {"last_search": -1}
+                }
+            ]
+            
+            researchers = []
+            async for doc in self.async_collection.aggregate(pipeline):
+                # Converter _id para string para JSON serialization
+                doc["id"] = str(doc["_id"]) if doc.get("_id") else ""
+                doc.pop("_id", None)
+                researchers.append(doc)
+            
+            print(f"👥 Encontrados {len(researchers)} pesquisadores únicos")
+            return researchers
+            
+        except Exception as e:
+            print(f"❌ Erro ao obter pesquisadores únicos (async): {e}")
+            return []
+    
+    async def delete_researcher_async(self, researcher_id: str) -> Dict[str, Any]:
+        """Deletar um pesquisador específico e todas as suas publicações"""
+        try:
+            if self.async_collection is None:
+                if not await self.connect_async():
+                    return {"deleted_publications": 0}
+            
+            # Deletar todas as buscas deste pesquisador
+            result = await self.async_collection.delete_many({
+                "researcher_info.name": researcher_id
+            })
+            
+            print(f"🗑️ Deletadas {result.deleted_count} buscas do pesquisador: {researcher_id}")
+            return {"deleted_publications": result.deleted_count}
+            
+        except Exception as e:
+            print(f"❌ Erro ao deletar pesquisador (async): {e}")
+            raise
+    
+    async def clear_all_data_async(self) -> Dict[str, Any]:
+        """Limpar todos os dados do banco (USE COM CUIDADO!)"""
+        try:
+            if self.async_collection is None:
+                if not await self.connect_async():
+                    return {"deleted_count": 0}
+            
+            # Deletar todos os documentos
+            result = await self.async_collection.delete_many({})
+            
+            print(f"🗑️ Banco de dados limpo! {result.deleted_count} documentos deletados")
+            return {"deleted_count": result.deleted_count}
+            
+        except Exception as e:
+            print(f"❌ Erro ao limpar banco de dados (async): {e}")
+            raise
+    
     def close(self):
         """Fechar conexões"""
         if self.client:

@@ -337,15 +337,26 @@ class ProfessionalExcelExporter:
         if filter_by_keywords:
             headers.append('Keywords Encontradas')
         
+        # Adicionar colunas de resumo do Lattes se disponível
+        lattes_summary = api_response.get('data', {}).get('lattes_summary')
+        if lattes_summary and lattes_summary.get('success'):
+            headers.extend([
+                'Instituição (Lattes)',
+                'Área (Lattes)',
+                'Resumo (Lattes)'
+            ])
+        
         # Escrever cabeçalhos
         for col, header in enumerate(headers):
             worksheet.write(0, col, header, formats['header'])
         
         # Configurar larguras das colunas
+        column_widths = [50, 30, 25, 8, 10, 12, 12, 40]  # Base
         if filter_by_keywords:
-            column_widths = [50, 30, 25, 8, 10, 12, 12, 40, 30]  # Adicionada largura para keywords
-        else:
-            column_widths = [50, 30, 25, 8, 10, 12, 12, 40]
+            column_widths.append(30)  # Keywords
+        if lattes_summary and lattes_summary.get('success'):
+            column_widths.extend([25, 20, 60])  # Instituição, Área, Resumo do Lattes
+        
         for i, width in enumerate(column_widths):
             worksheet.set_column(i, i, width)
         
@@ -374,9 +385,17 @@ class ProfessionalExcelExporter:
                 worksheet.write(row, 7, 'Link não disponível', data_format)
             
             # Keywords encontradas (se filtrado por keywords)
+            col_offset = 8
             if filter_by_keywords:
                 keywords_text = pub.get('keywords_text', '')
-                worksheet.write(row, 8, keywords_text, data_format)
+                worksheet.write(row, col_offset, keywords_text, data_format)
+                col_offset += 1
+            
+            # Dados do Lattes (se disponível) - mesmo valor para todas as linhas
+            if lattes_summary and lattes_summary.get('success'):
+                worksheet.write(row, col_offset, lattes_summary.get('institution', ''), data_format)
+                worksheet.write(row, col_offset + 1, lattes_summary.get('area', ''), data_format)
+                worksheet.write(row, col_offset + 2, lattes_summary.get('summary', ''), data_format)
             
             row += 1
         
@@ -450,6 +469,37 @@ class ProfessionalExcelExporter:
             
             for col, data in enumerate(researcher_data):
                 worksheet.write(row, col, str(data), formats['data'])
+            
+            row += 2
+        
+        # Informações do Lattes via Escavador (se disponível)
+        lattes_summary = api_response.get('data', {}).get('lattes_summary')
+        if lattes_summary and lattes_summary.get('success'):
+            worksheet.write(row, 0, 'RESUMO DO LATTES (VIA ESCAVADOR):', formats['header'])
+            row += 1
+            
+            # Cabeçalhos do Lattes
+            lattes_headers = ['Nome', 'Instituição', 'Área', 'Resumo', 'Link Lattes']
+            
+            for col, header in enumerate(lattes_headers):
+                worksheet.write(row, col, header, formats['header'])
+            
+            row += 1
+            
+            # Dados do Lattes
+            lattes_data = [
+                lattes_summary.get('name', 'N/A'),
+                lattes_summary.get('institution', 'N/A'),
+                lattes_summary.get('area', 'N/A'),
+                lattes_summary.get('summary', 'N/A'),
+                lattes_summary.get('lattes_url', 'N/A')
+            ]
+            
+            for col, data in enumerate(lattes_data):
+                if col == 4 and data != 'N/A' and data:  # Link do Lattes
+                    worksheet.write_url(row, col, data, formats['link'], 'Acessar Lattes')
+                else:
+                    worksheet.write(row, col, str(data), formats['data'])
         
         # Configurar larguras das colunas
         for col in range(8):
@@ -458,6 +508,7 @@ class ProfessionalExcelExporter:
         # Ajustar algumas colunas específicas
         worksheet.set_column(0, 0, 25)  # Consulta/Nome
         worksheet.set_column(1, 1, 30)  # Plataforma/Instituição
+        worksheet.set_column(3, 3, 60)  # Resumo do Lattes (mais largo)
         worksheet.set_column(4, 4, 18)  # Data/Áreas de Pesquisa
         
         return worksheet

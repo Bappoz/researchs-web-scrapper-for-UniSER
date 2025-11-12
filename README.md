@@ -6,6 +6,18 @@
 
 ---
 
+## 🎯 Funcionalidades Principais
+
+- ✅ **Google Scholar**: Busca completa de publicações e autores
+- ✅ **Resumo do Lattes**: Informações do currículo Lattes via Escavador
+- ✅ **Exportação Excel**: Exporte todos os dados para planilhas
+- ✅ **Métricas Acadêmicas**: H-index, citações, i10-index
+- ✅ **Interface Moderna**: Design responsivo e intuitivo
+
+> **Nota**: As funcionalidades de Lattes direto e ORCID foram removidas. O sistema agora foca no Google Scholar como fonte principal, complementado pelo resumo do Lattes via Escavador.
+
+---
+
 ## Instalação Rápida
 
 ### Para Windows

@@ -1618,6 +1618,21 @@ async def search_profile(
             data = extractor.extract_profile(url_to_process, max_publications)
             
             if data.get("success"):
+                # Buscar resumo do Lattes via Escavador usando o nome completo do pesquisador
+                lattes_summary = None
+                try:
+                    from .services.services import GoogleScholarService
+                    print(f"📚 Buscando resumo do Lattes via Escavador para: {data['name']}")
+                    service = GoogleScholarService()
+                    lattes_summary = service.get_lattes_summary_via_escavador(data['name'])
+                    if lattes_summary and lattes_summary.get('success'):
+                        print(f"✅ Resumo Lattes encontrado via Escavador!")
+                    else:
+                        print(f"⚠️ Resumo Lattes não encontrado no Escavador")
+                except Exception as e:
+                    print(f"⚠️ Erro ao buscar no Escavador: {e}")
+                    lattes_summary = None
+                
                 result = {
                     "success": True,
                     "message": f"Dados extraídos do Scholar: {data['name']}",
@@ -1631,7 +1646,12 @@ async def search_profile(
                         "institution": data["affiliation"],
                         "h_index": data["h_index"],
                         "i10_index": data.get("i10_index", "0"),
-                        "total_citations": data["total_citations"]
+                        "total_citations": data["total_citations"],
+                        # Adicionar informações do Lattes se disponível
+                        "lattes_institution": lattes_summary.get("institution") if lattes_summary and lattes_summary.get("success") else None,
+                        "lattes_area": lattes_summary.get("area") if lattes_summary and lattes_summary.get("success") else None,
+                        "lattes_summary": lattes_summary.get("summary") if lattes_summary and lattes_summary.get("success") else None,
+                        "lattes_url": lattes_summary.get("lattes_url") if lattes_summary and lattes_summary.get("success") else None,
                     },
                     "data": {
                         "publications": [
@@ -1652,8 +1672,10 @@ async def search_profile(
                                 "qualis": "N/A"
                             }
                             for pub in data["publications"]
-                        ]
-                    }
+                        ],
+                        "lattes_summary": lattes_summary  # Adicionar resumo do Lattes aos dados
+                    },
+                    "lattes_summary": lattes_summary  # Também no nível raiz para compatibilidade
                 }
                 
                 
@@ -1991,22 +2013,33 @@ async def search_multiple_authors(
 async def search_single_author_scholar(
     author: str = Query(..., description="Nome do autor para buscar"),
     max_results: int = Query(10, description="Número máximo de publicações"),
-    export_excel: bool = Query(False, description="Exportar para Excel")
+    export_excel: bool = Query(False, description="Exportar para Excel"),
+    include_lattes_summary: bool = Query(True, description="Incluir resumo do Lattes via Escavador")
 ):
-    """Endpoint para buscar um autor específico no Google Scholar"""
+    """Endpoint para buscar um autor específico no Google Scholar com opção de incluir resumo do Lattes"""
     try:
         print(f"🔍 Buscando autor individual: {author}")
         
         # Importar serviço
         from .services.services import GoogleScholarService
         
-        # Executar busca
+        # Executar busca no Scholar
         service = GoogleScholarService()
         author_profile, publications = service.search_by_author_profile(author)
         
         # Limitar publicações se necessário
         if len(publications) > max_results:
             publications = publications[:max_results]
+        
+        # Buscar resumo do Lattes via Escavador (se solicitado)
+        lattes_summary = None
+        if include_lattes_summary:
+            try:
+                print(f"📚 Buscando resumo do Lattes via Escavador...")
+                lattes_summary = service.get_lattes_summary_via_escavador(author)
+            except Exception as e:
+                print(f"⚠️ Erro ao buscar resumo do Lattes: {e}")
+                lattes_summary = None
         
         # Estruturar resposta no formato esperado pelo frontend
         result = {
@@ -2020,22 +2053,33 @@ async def search_single_author_scholar(
             # Dados estruturados como o frontend espera
             "data": {
                 "publications": [pub.dict() for pub in publications],
-                "author_profile": author_profile.dict() if author_profile else None
+                "author_profile": author_profile.dict() if author_profile else None,
+                "lattes_summary": lattes_summary  # Novo: resumo do Lattes
             },
             # Também manter compatibilidade com outros formatos
             "publications": [pub.dict() for pub in publications],
             "author_profile": author_profile.dict() if author_profile else None,
+            "lattes_summary": lattes_summary,  # Novo: resumo do Lattes
             # Informações do pesquisador para exibição
             "researcher_info": {
                 "name": author_profile.name if author_profile else author,
                 "institution": author_profile.affiliation if (author_profile and hasattr(author_profile, 'affiliation')) else "Instituição não informada",
                 "h_index": author_profile.h_index if (author_profile and hasattr(author_profile, 'h_index')) else 0,
                 "total_citations": author_profile.total_citations if (author_profile and hasattr(author_profile, 'total_citations')) else 0,
+                # Adicionar informações do Lattes se disponível
+                "lattes_institution": lattes_summary.get("institution") if lattes_summary and lattes_summary.get("success") else None,
+                "lattes_area": lattes_summary.get("area") if lattes_summary and lattes_summary.get("success") else None,
+                "lattes_summary": lattes_summary.get("summary") if lattes_summary and lattes_summary.get("success") else None,
+                "lattes_url": lattes_summary.get("lattes_url") if lattes_summary and lattes_summary.get("success") else None,
             } if author_profile else {
                 "name": author,
                 "institution": "Instituição não informada",
                 "h_index": 0,
-                "total_citations": 0
+                "total_citations": 0,
+                "lattes_institution": lattes_summary.get("institution") if lattes_summary and lattes_summary.get("success") else None,
+                "lattes_area": lattes_summary.get("area") if lattes_summary and lattes_summary.get("success") else None,
+                "lattes_summary": lattes_summary.get("summary") if lattes_summary and lattes_summary.get("success") else None,
+                "lattes_url": lattes_summary.get("lattes_url") if lattes_summary and lattes_summary.get("success") else None,
             }
         }
         
@@ -2072,10 +2116,81 @@ async def search_single_author_scholar(
                 print(f"❌ Erro na exportação Excel: {e}")
                 result["excel_error"] = str(e)
         
+        # Salvar no MongoDB se disponível
+        if MONGODB_AVAILABLE and result["data"]["publications"]:
+            try:
+                saved = research_db.save_research_result(result)
+                if saved:
+                    result["saved_to_database"] = True
+                    print(f"💾 Dados do autor '{author}' salvos no MongoDB")
+                else:
+                    result["database_error"] = "Falha ao salvar no MongoDB"
+            except Exception as e:
+                print(f"❌ Erro ao salvar no MongoDB: {e}")
+                result["database_error"] = str(e)
+        
         return result
         
     except Exception as e:
         print(f"❌ Erro na busca de autor: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+@app.get("/search/lattes-summary/escavador")
+async def get_lattes_summary_escavador(
+    name: str = Query(..., description="Nome do pesquisador para buscar resumo do Lattes")
+):
+    """
+    Endpoint para buscar o resumo do Lattes via Escavador
+    
+    Este endpoint busca informações resumidas do currículo Lattes
+    através do site Escavador, complementando os dados do Google Scholar.
+    """
+    try:
+        print(f"🔍 Buscando resumo do Lattes via Escavador: {name}")
+        
+        # Importar serviço
+        from .services.services import GoogleScholarService
+        
+        # Executar busca no Escavador
+        service = GoogleScholarService()
+        lattes_summary = service.get_lattes_summary_via_escavador(name)
+        
+        if not lattes_summary.get("success"):
+            return {
+                "success": False,
+                "message": f"Resumo do Lattes não encontrado para '{name}' no Escavador",
+                "query": name,
+                "search_type": "lattes_summary",
+                "platform": "escavador",
+                "data": None
+            }
+        
+        return {
+            "success": True,
+            "message": f"Resumo do Lattes encontrado para '{lattes_summary.get('name', name)}'",
+            "query": name,
+            "search_type": "lattes_summary",
+            "platform": "escavador",
+            "execution_time": 2.0,
+            "data": {
+                "name": lattes_summary.get("name"),
+                "summary": lattes_summary.get("summary"),
+                "institution": lattes_summary.get("institution"),
+                "area": lattes_summary.get("area"),
+                "lattes_url": lattes_summary.get("lattes_url"),
+                "source": "escavador"
+            },
+            "lattes_info": {
+                "name": lattes_summary.get("name"),
+                "summary": lattes_summary.get("summary"),
+                "institution": lattes_summary.get("institution"),
+                "area": lattes_summary.get("area"),
+                "lattes_url": lattes_summary.get("lattes_url")
+            }
+        }
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar resumo do Lattes: {e}")
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @app.get("/search/author/publications/{author_id}")
@@ -2257,13 +2372,50 @@ async def clear_mongodb():
     
     try:
         db = ResearchDatabase()
-        # Implementar método clear se necessário
+        # Deletar todas as coleções
+        result = await db.clear_all_data_async()
         return {
             "success": True,
-            "message": "Funcionalidade de limpeza não implementada por segurança"
+            "message": f"Banco de dados limpo com sucesso! {result.get('deleted_count', 0)} registros deletados."
         }
     except Exception as e:
         print(f"❌ Erro ao limpar dados: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+@app.get("/mongodb/researchers")
+async def get_all_researchers():
+    """Obter lista de todos os pesquisadores únicos do MongoDB"""
+    if not MONGODB_AVAILABLE:
+        raise HTTPException(status_code=503, detail="MongoDB não disponível")
+    
+    try:
+        db = ResearchDatabase()
+        researchers = await db.get_all_unique_researchers_async()
+        return {
+            "success": True,
+            "total_researchers": len(researchers),
+            "researchers": researchers
+        }
+    except Exception as e:
+        print(f"❌ Erro ao obter pesquisadores: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+@app.delete("/mongodb/researcher/{researcher_id}")
+async def delete_researcher(researcher_id: str):
+    """Deletar um pesquisador específico e todas as suas publicações"""
+    if not MONGODB_AVAILABLE:
+        raise HTTPException(status_code=503, detail="MongoDB não disponível")
+    
+    try:
+        db = ResearchDatabase()
+        result = await db.delete_researcher_async(researcher_id)
+        return {
+            "success": True,
+            "message": f"Pesquisador deletado com sucesso!",
+            "deleted_publications": result.get('deleted_publications', 0)
+        }
+    except Exception as e:
+        print(f"❌ Erro ao deletar pesquisador: {e}")
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @app.get("/download/excel/{filename}")

@@ -18,6 +18,8 @@ from ..models import (
     CitationData, SearchType
 )
 from ..utils.academic_metrics import calculate_academic_metrics
+from ..scraper.escavador_scraper import search_lattes_summary
+from ..scraper.lattes_direct_scraper import search_lattes_by_name
 
 # Carregar variáveis de ambiente
 env_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
@@ -197,6 +199,46 @@ class GoogleScholarService:
         summary = self._generate_author_summary(author_name, publications)
         
         return author_profile, publications, summary
+    
+    def get_lattes_summary_via_escavador(self, author_name: str) -> Dict[str, Any]:
+        """
+        Busca o resumo do Lattes via busca direta na Plataforma Lattes
+        
+        (Nota: Nome mantido para compatibilidade, mas agora busca diretamente no Lattes)
+        
+        Args:
+            author_name: Nome do pesquisador
+            
+        Returns:
+            Dict com resumo do perfil Lattes
+        """
+        try:
+            print(f"🔍 Buscando resumo do Lattes diretamente na Plataforma Lattes: {author_name}")
+            
+            # Primeiro tentar busca direta no Lattes
+            lattes_data = search_lattes_by_name(author_name)
+            
+            if lattes_data and lattes_data.get('success'):
+                print(f"✅ Dados encontrados no Lattes!")
+                return lattes_data
+            
+            # Se não encontrou no Lattes, tentar Escavador como fallback
+            print(f"⚠️ Não encontrado no Lattes, tentando Escavador...")
+            escavador_data = search_lattes_summary(author_name)
+            return escavador_data
+            
+        except Exception as e:
+            print(f"⚠️ Erro ao buscar no Lattes/Escavador: {e}")
+            return {
+                "success": False,
+                "name": author_name,
+                "summary": "Resumo não disponível",
+                "institution": "Instituição não informada",
+                "area": "Área não informada",
+                "lattes_url": None,
+                "source": "escavador",
+                "error": str(e)
+            }
     
     def search_citations(self, query: str, max_results: int = 3) -> List[CitationData]:
         """Busca citações para uma query"""

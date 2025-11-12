@@ -88,6 +88,10 @@ class ConsolidatedExcelExporter:
                     "H-Index": researcher_info.get("h_index", "N/A"),
                     "i10-Index": researcher_info.get("i10_index", "N/A"),
                     "Total de Citações": researcher_info.get("total_citations", "N/A"),
+                    "Área de Pesquisa (Lattes)": researcher_info.get("lattes_area", "N/A"),
+                    "Instituição (Lattes)": researcher_info.get("lattes_institution", "N/A"),
+                    "Resumo Lattes": researcher_info.get("lattes_summary", "N/A"),
+                    "URL Lattes": researcher_info.get("lattes_url", "N/A"),
                     "Plataforma": research.get("platform", "N/A"),
                     "Total de Publicações": research.get("total_publications", 0),
                     "Data da Pesquisa": timestamp_str,
@@ -145,7 +149,8 @@ class ConsolidatedExcelExporter:
                         "Tipo": pub.get("type", "N/A"),
                         "Plataforma": pub.get("platform", research.get("platform", "N/A")),
                         "Keywords Encontradas": ", ".join(keywords_found) if keywords_found else "N/A",
-                        "Data da Coleta": timestamp_str
+                        "Data da Coleta": timestamp_str,
+                        "Resumo Lattes (Pesquisador)": researcher_info.get("lattes_summary", "N/A")
                     }
                     
                     all_publications.append(publication_data)
@@ -230,7 +235,8 @@ class ConsolidatedExcelExporter:
             'H': 12,  # Tipo
             'I': 12,  # Plataforma
             'J': 40,  # Keywords
-            'K': 12   # Data
+            'K': 12,  # Data
+            'L': 60   # Resumo Lattes
         }
         
         for col, width in column_widths.items():
@@ -266,10 +272,14 @@ class ConsolidatedExcelExporter:
             'C': 10,  # H-Index
             'D': 10,  # i10-Index
             'E': 15,  # Citações
-            'F': 12,  # Plataforma
-            'G': 12,  # Total Pubs
-            'H': 12,  # Data
-            'I': 12   # Tempo
+            'F': 30,  # Área Lattes
+            'G': 35,  # Instituição Lattes
+            'H': 60,  # Resumo Lattes
+            'I': 40,  # URL Lattes
+            'J': 12,  # Plataforma
+            'K': 12,  # Total Pubs
+            'L': 12,  # Data
+            'M': 12   # Tempo
         }
         
         for col, width in column_widths.items():

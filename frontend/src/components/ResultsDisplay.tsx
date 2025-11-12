@@ -21,6 +21,7 @@ import {
   Users,
   TrendingUp,
 } from "lucide-react";
+import LattesSummaryCard from "./LattesSummaryCard";
 
 interface Publication {
   title: string;
@@ -893,6 +894,16 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Resumo do Lattes via Escavador */}
+      {results.data?.lattes_summary && (
+        <div className='px-6 pt-6'>
+          <LattesSummaryCard 
+            data={results.data.lattes_summary} 
+            loading={false}
+          />
         </div>
       )}
 
