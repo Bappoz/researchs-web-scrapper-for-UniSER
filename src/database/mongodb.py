@@ -1,5 +1,5 @@
 """
-🗄️ MONGODB DATABASE MANAGER
+MONGODB DATABASE MANAGER
 Gerenciamento de banco de dados para pesquisas acadêmicas
 """
 
@@ -18,8 +18,8 @@ class ResearchDatabase:
     """Gerenciador do banco de dados de pesquisas"""
     
     def __init__(self):
-        self.mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017/web-scraper-uniser')
-        self.database_name = os.getenv('DATABASE_NAME', 'web-scraper-uniser')
+        self.mongo_url = os.getenv('MONGODB_URL', 'mongodb://localhost:27017')
+        self.database_name = os.getenv('MONGODB_DATABASE', 'web-scraper-uniser')
         self.collection_name = os.getenv('COLLECTION_NAME', 'researchers-data')
         
         # Cliente síncrono para operações normais

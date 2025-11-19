@@ -5,12 +5,10 @@ color 0A
 :MENU
 cls
 echo.
-echo ╔════════════════════════════════════════════════════════════════╗
-echo ║                                                                ║
-echo ║        WEB SCRAPPER - SISTEMA DE PESQUISA ACADEMICA           ║
-echo ║              Google Scholar + Plataforma Lattes                ║
-echo ║                                                                ║
-echo ╚════════════════════════════════════════════════════════════════╝
+echo                   -- TRACER --                                                
+echo           SISTEMA DE PESQUISA ACADEMICA                           
+echo         Google Scholar + Plataforma Lattes                  
+
 echo.
 echo  Escolha uma opcao:
 echo.
@@ -127,12 +125,10 @@ goto MENU
 :HELP
 cls
 echo.
-echo ╔════════════════════════════════════════════════════════════════╗
-echo ║                    GUIA DE USO RAPIDO                          ║
-echo ╚════════════════════════════════════════════════════════════════╝
+echo                ---- GUIA DE USO RAPIDO ----                          
 echo.
 echo  PRIMEIRA VEZ USANDO O SISTEMA:
-echo  ────────────────────────────────────────────────────────────────
+echo.
 echo  1. Execute opcao [1] para verificar pre-requisitos
 echo  2. Se faltar algo, instale e execute opcao [1] novamente
 echo  3. Execute opcao [2] para instalar dependencias do projeto
@@ -142,13 +138,13 @@ echo     - MongoDB local: Execute opcao [3] para iniciar
 echo  5. Execute opcao [6] para iniciar Backend + Frontend
 echo.
 echo  USO DIARIO ^(apos configuracao inicial^):
-echo  ────────────────────────────────────────────────────────────────
+echo.
 echo  1. Se usar MongoDB local, execute opcao [3] primeiro
 echo  2. Execute opcao [6] para iniciar tudo de uma vez
 echo  3. Acesse http://localhost:5173 no navegador
 echo.
 echo  COMO USAR O SISTEMA WEB:
-echo  ────────────────────────────────────────────────────────────────
+echo.
 echo  1. Pesquisar por nome: Busca manual no Google Academico
 echo  2. Pesquisar por link: Cole o link do perfil do Google Scholar
 echo  3. Ver resultados: Metricas, publicacoes e dados Lattes
@@ -158,14 +154,14 @@ echo  6. Dark Mode: Clique no icone sol/lua no topo
 echo  7. Ajuda: Clique no botao "Ajuda" para tutoriais completos
 echo.
 echo  SOLUCAO DE PROBLEMAS:
-echo  ────────────────────────────────────────────────────────────────
+echo.
 echo  - Backend nao inicia: Verifique se MongoDB esta rodando
 echo  - Frontend nao abre: Verifique se Backend esta rodando
 echo  - Erro de dependencias: Execute opcao [2] novamente
 echo  - Excel vazio: Certifique-se de fazer uma busca primeiro
 echo.
 echo  REQUISITOS MINIMOS:
-echo  ────────────────────────────────────────────────────────────────
+echo.
 echo  - Python 3.9 ou superior
 echo  - Node.js 18 ou superior
 echo  - MongoDB ^(local ou Atlas cloud^)
